@@ -1,0 +1,427 @@
+{
+  "scenarioId": "register",
+  "repository": "D:\\Projects\\RepoMind\\demo\\repomind-agent-test-demo\\call-chain-demo",
+  "question": "追踪UserService.register到ConfigRepository.getTemplate的调用路径。",
+  "statusCode": 200,
+  "capturedAt": "2026-09-24T13:58:34.999Z",
+  "response": {
+    "status": "COMPLETED",
+    "provider": "ollama:qwen2.5-coder:14b:json-tool-compat",
+    "trace": [
+      {
+        "step": 1,
+        "tool": "searchSymbol",
+        "input": {
+          "language": "JAVA",
+          "name": "register",
+          "qualifiedName": "UserService.register",
+          "type": "METHOD"
+        },
+        "observation": {
+          "tool": "searchSymbol",
+          "success": true,
+          "data": [
+            {
+              "id": "src/UserService.java:5:7:METHOD:UserService.register",
+              "name": "register",
+              "qualifiedName": "UserService.register",
+              "type": "METHOD",
+              "language": "JAVA",
+              "filePath": "src/UserService.java",
+              "startLine": 5,
+              "endLine": 7,
+              "parentSymbolId": "src/UserService.java:1:8:CLASS:UserService",
+              "signature": "register(String email)",
+              "module": null
+            }
+          ],
+          "error": null,
+          "text": "searchSymbol executed successfully"
+        },
+        "observationText": "searchSymbol executed successfully",
+        "success": true,
+        "output": [
+          {
+            "id": "src/UserService.java:5:7:METHOD:UserService.register",
+            "name": "register",
+            "qualifiedName": "UserService.register",
+            "type": "METHOD",
+            "language": "JAVA",
+            "filePath": "src/UserService.java",
+            "startLine": 5,
+            "endLine": 7,
+            "parentSymbolId": "src/UserService.java:1:8:CLASS:UserService",
+            "signature": "register(String email)",
+            "module": null
+          }
+        ],
+        "error": null,
+        "progress": true,
+        "newEvidence": [
+          "Symbol:UserService.register"
+        ],
+        "policyStatus": null,
+        "toolExecuted": true
+      },
+      {
+        "step": 2,
+        "tool": "searchSymbol",
+        "input": {
+          "language": "JAVA",
+          "name": "getTemplate",
+          "qualifiedName": "ConfigRepository.getTemplate",
+          "type": "METHOD"
+        },
+        "observation": {
+          "tool": "searchSymbol",
+          "success": true,
+          "data": [
+            {
+              "id": "src/ConfigRepository.java:3:5:METHOD:ConfigRepository.getTemplate",
+              "name": "getTemplate",
+              "qualifiedName": "ConfigRepository.getTemplate",
+              "type": "METHOD",
+              "language": "JAVA",
+              "filePath": "src/ConfigRepository.java",
+              "startLine": 3,
+              "endLine": 5,
+              "parentSymbolId": "src/ConfigRepository.java:1:6:CLASS:ConfigRepository",
+              "signature": "getTemplate()",
+              "module": null
+            }
+          ],
+          "error": null,
+          "text": "searchSymbol executed successfully"
+        },
+        "observationText": "searchSymbol executed successfully",
+        "success": true,
+        "output": [
+          {
+            "id": "src/ConfigRepository.java:3:5:METHOD:ConfigRepository.getTemplate",
+            "name": "getTemplate",
+            "qualifiedName": "ConfigRepository.getTemplate",
+            "type": "METHOD",
+            "language": "JAVA",
+            "filePath": "src/ConfigRepository.java",
+            "startLine": 3,
+            "endLine": 5,
+            "parentSymbolId": "src/ConfigRepository.java:1:6:CLASS:ConfigRepository",
+            "signature": "getTemplate()",
+            "module": null
+          }
+        ],
+        "error": null,
+        "progress": false,
+        "newEvidence": [],
+        "policyStatus": null,
+        "toolExecuted": true
+      }
+    ],
+    "answer": "```json\n{\n  \"issue_type\": \"CALL_CHAIN_ANALYSIS\",\n  \"summary\": \"追踪UserService.register到ConfigRepository.getTemplate的调用路径\",\n  \"location\": {\n    \"file\": null,\n    \"line\": null,\n    \"symbol\": null\n  },\n  \"root_cause\": \"调用路径已通过AST_RESOLVED_CALL_GRAPH验证\",\n  \"evidence\": [\n    {\n      \"file\": \"src/UserService.java\",\n      \"line\": 6,\n      \"symbol\": \"UserService.register\",\n      \"code\": \"emailService.sendEmail(email)\",\n      \"reason\": \"调用EmailService.sendEmail\"\n    },\n    {\n      \"file\": \"src/EmailService.java\",\n      \"line\": 6,\n      \"symbol\": \"EmailService.sendEmail\",\n      \"code\": \"templateService.render()\",\n      \"reason\": \"调用TemplateService.render\"\n    },\n    {\n      \"file\": \"src/TemplateService.java\",\n      \"line\": 6,\n      \"symbol\": \"TemplateService.render\",\n      \"code\": \"repository.getTemplate()\",\n      \"reason\": \"调用ConfigRepository.getTemplate\"\n    }\n  ],\n  \"call_chain\": [\n    \"UserService.register\",\n    \"EmailService.sendEmail\",\n    \"TemplateService.render\",\n    \"ConfigRepository.getTemplate\"\n  ],\n  \"fix_suggestion\": \"\",\n  \"uncertainty\": \"\"\n}\n```",
+    "finalDiagnosis": {
+      "issue_type": "CALL_CHAIN_ANALYSIS",
+      "summary": "追踪UserService.register到ConfigRepository.getTemplate的调用路径",
+      "location": {
+        "file": "src/ConfigRepository.java",
+        "line": 3,
+        "symbol": "ConfigRepository.getTemplate"
+      },
+      "root_cause": "调用路径已通过AST_RESOLVED_CALL_GRAPH验证",
+      "evidence": [
+        {
+          "file": "src/UserService.java",
+          "line": 5,
+          "symbol": "UserService.register",
+          "code": null,
+          "reason": "searchSymbol 返回的 Symbol",
+          "kind": "FACT",
+          "source_tool": "searchSymbol",
+          "source_step": 1
+        }
+      ],
+      "call_chain": [
+        "UserService.register",
+        "EmailService.sendEmail",
+        "TemplateService.render",
+        "ConfigRepository.getTemplate"
+      ],
+      "fix_suggestion": "",
+      "uncertainty": "",
+      "root_cause_kind": "INFERENCE"
+    },
+    "rawModelOutput": "```json\n{\n  \"issue_type\": \"CALL_CHAIN_ANALYSIS\",\n  \"summary\": \"追踪UserService.register到ConfigRepository.getTemplate的调用路径\",\n  \"location\": {\n    \"file\": null,\n    \"line\": null,\n    \"symbol\": null\n  },\n  \"root_cause\": \"调用路径已通过AST_RESOLVED_CALL_GRAPH验证\",\n  \"evidence\": [\n    {\n      \"file\": \"src/UserService.java\",\n      \"line\": 6,\n      \"symbol\": \"UserService.register\",\n      \"code\": \"emailService.sendEmail(email)\",\n      \"reason\": \"调用EmailService.sendEmail\"\n    },\n    {\n      \"file\": \"src/EmailService.java\",\n      \"line\": 6,\n      \"symbol\": \"EmailService.sendEmail\",\n      \"code\": \"templateService.render()\",\n      \"reason\": \"调用TemplateService.render\"\n    },\n    {\n      \"file\": \"src/TemplateService.java\",\n      \"line\": 6,\n      \"symbol\": \"TemplateService.render\",\n      \"code\": \"repository.getTemplate()\",\n      \"reason\": \"调用ConfigRepository.getTemplate\"\n    }\n  ],\n  \"call_chain\": [\n    \"UserService.register\",\n    \"EmailService.sendEmail\",\n    \"TemplateService.render\",\n    \"ConfigRepository.getTemplate\"\n  ],\n  \"fix_suggestion\": \"\",\n  \"uncertainty\": \"\"\n}\n```",
+    "diagnosisIssues": [
+      "证据未见于成功 Observation：src/UserService.java:6",
+      "证据未见于成功 Observation：src/EmailService.java:6",
+      "证据未见于成功 Observation：src/TemplateService.java:6",
+      "EVIDENCE_PROJECTED_FROM_TOOL: 1 verified facts",
+      "MODEL_LINE_MISMATCH: 使用 Observation 中的真实位置",
+      "MODEL_SYMBOL_MISMATCH: 使用 Observation 中的 Symbol",
+      "EVIDENCE_NOT_FOUND: 模型原稿包含无法核验的源码"
+    ],
+    "diagnosisStatus": "VALID",
+    "userMessage": null,
+    "evidenceProjection": {
+      "modelClaim": {
+        "location": {
+          "file": null,
+          "line": null,
+          "symbol": null
+        },
+        "call_chain": [
+          "UserService.register",
+          "EmailService.sendEmail",
+          "TemplateService.render",
+          "ConfigRepository.getTemplate"
+        ],
+        "evidence": [
+          {
+            "file": "src/UserService.java",
+            "line": 6,
+            "symbol": "UserService.register",
+            "code": "emailService.sendEmail(email)",
+            "reason": "调用EmailService.sendEmail",
+            "kind": "FACT",
+            "source_tool": null,
+            "source_step": null
+          },
+          {
+            "file": "src/EmailService.java",
+            "line": 6,
+            "symbol": "EmailService.sendEmail",
+            "code": "templateService.render()",
+            "reason": "调用TemplateService.render",
+            "kind": "FACT",
+            "source_tool": null,
+            "source_step": null
+          },
+          {
+            "file": "src/TemplateService.java",
+            "line": 6,
+            "symbol": "TemplateService.render",
+            "code": "repository.getTemplate()",
+            "reason": "调用ConfigRepository.getTemplate",
+            "kind": "FACT",
+            "source_tool": null,
+            "source_step": null
+          }
+        ]
+      },
+      "systemResult": {
+        "location": {
+          "file": "src/ConfigRepository.java",
+          "line": 3,
+          "symbol": "ConfigRepository.getTemplate"
+        },
+        "call_chain": [
+          "UserService.register",
+          "EmailService.sendEmail",
+          "TemplateService.render",
+          "ConfigRepository.getTemplate"
+        ],
+        "projected_fact_count": 1
+      },
+      "dataFlowChain": null,
+      "verifiedSymbolCount": 4,
+      "verifiedSourceLineCount": 0,
+      "verifiedCallEdgeCount": 3
+    },
+    "completionDecision": "COMPLETE",
+    "executionState": {
+      "seen_tool_calls": 2,
+      "discovered_symbols": [
+        {
+          "id": "src/UserService.java:5:7:METHOD:UserService.register",
+          "name": "register",
+          "qualifiedName": "UserService.register",
+          "type": "METHOD",
+          "language": "JAVA",
+          "filePath": "src/UserService.java",
+          "startLine": 5,
+          "endLine": 7,
+          "parentSymbolId": "src/UserService.java:1:8:CLASS:UserService",
+          "signature": "register(String email)",
+          "module": null
+        },
+        {
+          "id": "src/EmailService.java:5:8:METHOD:EmailService.sendEmail",
+          "name": "sendEmail",
+          "qualifiedName": "EmailService.sendEmail",
+          "type": "METHOD",
+          "language": "JAVA",
+          "filePath": "src/EmailService.java",
+          "startLine": 5,
+          "endLine": 8,
+          "parentSymbolId": "src/EmailService.java:1:9:CLASS:EmailService",
+          "signature": "sendEmail(String email)",
+          "module": null
+        },
+        {
+          "id": "src/TemplateService.java:5:8:METHOD:TemplateService.render",
+          "name": "render",
+          "qualifiedName": "TemplateService.render",
+          "type": "METHOD",
+          "language": "JAVA",
+          "filePath": "src/TemplateService.java",
+          "startLine": 5,
+          "endLine": 8,
+          "parentSymbolId": "src/TemplateService.java:1:9:CLASS:TemplateService",
+          "signature": "render()",
+          "module": null
+        },
+        {
+          "id": "src/ConfigRepository.java:3:5:METHOD:ConfigRepository.getTemplate",
+          "name": "getTemplate",
+          "qualifiedName": "ConfigRepository.getTemplate",
+          "type": "METHOD",
+          "language": "JAVA",
+          "filePath": "src/ConfigRepository.java",
+          "startLine": 3,
+          "endLine": 5,
+          "parentSymbolId": "src/ConfigRepository.java:1:6:CLASS:ConfigRepository",
+          "signature": "getTemplate()",
+          "module": null
+        }
+      ],
+      "discovered_files": [],
+      "discovered_call_edges": [
+        {
+          "source_id": "src/UserService.java:5:7:METHOD:UserService.register",
+          "target_id": "src/EmailService.java:5:8:METHOD:EmailService.sendEmail",
+          "file": "src/UserService.java",
+          "line": 6,
+          "code": "emailService.sendEmail(email)",
+          "source_tool": "resolved_call_graph",
+          "source_step": 0,
+          "from": "UserService.register",
+          "to": "EmailService.sendEmail"
+        },
+        {
+          "source_id": "src/EmailService.java:5:8:METHOD:EmailService.sendEmail",
+          "target_id": "src/TemplateService.java:5:8:METHOD:TemplateService.render",
+          "file": "src/EmailService.java",
+          "line": 6,
+          "code": "templateService.render()",
+          "source_tool": "resolved_call_graph",
+          "source_step": 0,
+          "from": "EmailService.sendEmail",
+          "to": "TemplateService.render"
+        },
+        {
+          "source_id": "src/TemplateService.java:5:8:METHOD:TemplateService.render",
+          "target_id": "src/ConfigRepository.java:3:5:METHOD:ConfigRepository.getTemplate",
+          "file": "src/TemplateService.java",
+          "line": 6,
+          "code": "repository.getTemplate()",
+          "source_tool": "resolved_call_graph",
+          "source_step": 0,
+          "from": "TemplateService.render",
+          "to": "ConfigRepository.getTemplate"
+        }
+      ],
+      "graph_path_evidence": [
+        {
+          "relationId": "src/UserService.java:6:CALLS:src/UserService.java:5:7:METHOD:UserService.register:sendEmail",
+          "sourceSymbolId": "src/UserService.java:5:7:METHOD:UserService.register",
+          "targetSymbolId": "src/EmailService.java:5:8:METHOD:EmailService.sendEmail",
+          "filePath": "src/UserService.java",
+          "line": 6,
+          "evidence": "emailService.sendEmail(email)",
+          "resolutionMethod": "RECEIVER_TYPE_BINDING",
+          "source": "AST_RESOLVED_CALL_GRAPH"
+        },
+        {
+          "relationId": "src/EmailService.java:6:CALLS:src/EmailService.java:5:8:METHOD:EmailService.sendEmail:render",
+          "sourceSymbolId": "src/EmailService.java:5:8:METHOD:EmailService.sendEmail",
+          "targetSymbolId": "src/TemplateService.java:5:8:METHOD:TemplateService.render",
+          "filePath": "src/EmailService.java",
+          "line": 6,
+          "evidence": "templateService.render()",
+          "resolutionMethod": "RECEIVER_TYPE_BINDING",
+          "source": "AST_RESOLVED_CALL_GRAPH"
+        },
+        {
+          "relationId": "src/TemplateService.java:6:CALLS:src/TemplateService.java:5:8:METHOD:TemplateService.render:getTemplate",
+          "sourceSymbolId": "src/TemplateService.java:5:8:METHOD:TemplateService.render",
+          "targetSymbolId": "src/ConfigRepository.java:3:5:METHOD:ConfigRepository.getTemplate",
+          "filePath": "src/TemplateService.java",
+          "line": 6,
+          "evidence": "repository.getTemplate()",
+          "resolutionMethod": "RECEIVER_TYPE_BINDING",
+          "source": "AST_RESOLVED_CALL_GRAPH"
+        }
+      ],
+      "collected_evidence_count": 0,
+      "last_progress_step": 1,
+      "consecutive_no_progress": 1,
+      "failed_searches": [],
+      "current_evidence_requirements": [
+        "target_symbol",
+        "caller_context",
+        "callee_context"
+      ],
+      "evidence_checklist": {
+        "start_symbol": true,
+        "end_symbol": true,
+        "intermediate_nodes": true,
+        "each_call_edge": true,
+        "edge_observations": true
+      },
+      "missing_evidence": [],
+      "verified_call_chain": [
+        "UserService.register",
+        "EmailService.sendEmail",
+        "TemplateService.render",
+        "ConfigRepository.getTemplate"
+      ],
+      "partial_call_chain": [
+        "UserService.register",
+        "EmailService.sendEmail",
+        "TemplateService.render",
+        "ConfigRepository.getTemplate"
+      ],
+      "duplicate_calls": 0,
+      "no_progress_calls": 1,
+      "policy_events": [
+        {
+          "step": 0,
+          "status": "GRAPH_PATH_FOUND",
+          "message": "Resolved call graph supplied a shortest verified path; no Tool call was fabricated."
+        },
+        {
+          "step": 2,
+          "status": "NO_NEW_EVIDENCE",
+          "tool": "searchSymbol",
+          "message": "Tool completed without new Symbols, files, source lines, or resolved edges."
+        }
+      ],
+      "completion_decision": "COMPLETE",
+      "verified_evidence_counts": {
+        "symbols": 4,
+        "source_lines": 0,
+        "resolved_call_edges": 3
+      },
+      "data_flow_chain": null
+    },
+    "plan": {
+      "task_type": "CALL_CHAIN_ANALYSIS",
+      "analysis_goal": "追踪目标 Symbol 的真实调用路径",
+      "target_keywords": [
+        "register",
+        "getTemplate"
+      ],
+      "target_source": "QUERY",
+      "required_evidence": [
+        "target_symbol",
+        "caller_context",
+        "callee_context"
+      ],
+      "preferred_tools": [
+        "searchSymbol",
+        "findCallers",
+        "findCallees"
+      ],
+      "stop_condition": "获得足够的已解析调用关系来回答路径；未解析边需标明不确定"
+    }
+  }
+}

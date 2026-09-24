@@ -1,0 +1,1 @@
+"""Tree-sitter parser adapters."""

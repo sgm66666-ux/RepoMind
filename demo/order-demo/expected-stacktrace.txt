@@ -1,0 +1,5 @@
+Exception in thread "main" java.lang.NullPointerException: Cannot read field "available" because "<local1>" is null
+	at demo.order.InventoryService.checkStock(InventoryService.java:12)
+	at demo.order.OrderService.createOrder(OrderService.java:11)
+	at demo.order.OrderController.createOrder(OrderController.java:11)
+	at demo.order.OrderDemoApplication.main(OrderDemoApplication.java:9)

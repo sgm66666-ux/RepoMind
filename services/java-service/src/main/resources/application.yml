@@ -1,0 +1,6 @@
+server:
+  port: 8080
+
+repomind:
+  python-service-url: ${REPOMIND_PYTHON_SERVICE_URL:http://localhost:8000}
+  frontend-origins: ${REPOMIND_FRONTEND_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}

@@ -1,0 +1,670 @@
+{
+  "scenarioId": "inventory",
+  "repository": "D:\\Projects\\RepoMind\\demo\\order-demo",
+  "question": "为什么InventoryService.checkStock出现NullPointerException？",
+  "statusCode": 200,
+  "capturedAt": "2026-09-24T13:58:10.021Z",
+  "response": {
+    "status": "COMPLETED",
+    "provider": "ollama:qwen2.5-coder:14b:json-tool-compat",
+    "trace": [
+      {
+        "step": 1,
+        "tool": "searchSymbol",
+        "input": {
+          "language": "JAVA",
+          "name": "checkStock",
+          "qualifiedName": "InventoryService.checkStock",
+          "type": "METHOD"
+        },
+        "observation": {
+          "tool": "searchSymbol",
+          "success": true,
+          "data": [
+            {
+              "id": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock",
+              "name": "checkStock",
+              "qualifiedName": "demo.order.InventoryService.checkStock",
+              "type": "METHOD",
+              "language": "JAVA",
+              "filePath": "InventoryService.java",
+              "startLine": 10,
+              "endLine": 15,
+              "parentSymbolId": "InventoryService.java:3:16:CLASS:demo.order.InventoryService",
+              "signature": "checkStock()",
+              "module": "demo.order"
+            }
+          ],
+          "error": null,
+          "text": "searchSymbol executed successfully"
+        },
+        "observationText": "searchSymbol executed successfully",
+        "success": true,
+        "output": [
+          {
+            "id": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock",
+            "name": "checkStock",
+            "qualifiedName": "demo.order.InventoryService.checkStock",
+            "type": "METHOD",
+            "language": "JAVA",
+            "filePath": "InventoryService.java",
+            "startLine": 10,
+            "endLine": 15,
+            "parentSymbolId": "InventoryService.java:3:16:CLASS:demo.order.InventoryService",
+            "signature": "checkStock()",
+            "module": "demo.order"
+          }
+        ],
+        "error": null,
+        "progress": true,
+        "newEvidence": [
+          "Symbol:demo.order.InventoryService.checkStock"
+        ],
+        "policyStatus": null,
+        "toolExecuted": true
+      },
+      {
+        "step": 2,
+        "tool": "readFile",
+        "input": {
+          "filePath": "InventoryService.java",
+          "requestedRange": {
+            "startLine": 10,
+            "endLine": 15
+          }
+        },
+        "observation": {
+          "tool": "readFile",
+          "success": true,
+          "data": {
+            "filePath": "InventoryService.java",
+            "language": "JAVA",
+            "requestedRange": {
+              "startLine": 1,
+              "endLine": 16
+            },
+            "content": "package demo.order;\n\npublic class InventoryService {\n    private final InventoryRepository inventoryRepository;\n\n    public InventoryService(InventoryRepository inventoryRepository) {\n        this.inventoryRepository = inventoryRepository;\n    }\n\n    public void checkStock() {\n        Inventory stock = inventoryRepository.findStock();\n        if (stock.available) {\n            System.out.println(\"stock available\");\n        }\n    }\n}"
+          },
+          "error": null,
+          "text": "readFile executed successfully"
+        },
+        "observationText": "readFile executed successfully",
+        "success": true,
+        "output": {
+          "filePath": "InventoryService.java",
+          "language": "JAVA",
+          "requestedRange": {
+            "startLine": 1,
+            "endLine": 16
+          },
+          "content": "package demo.order;\n\npublic class InventoryService {\n    private final InventoryRepository inventoryRepository;\n\n    public InventoryService(InventoryRepository inventoryRepository) {\n        this.inventoryRepository = inventoryRepository;\n    }\n\n    public void checkStock() {\n        Inventory stock = inventoryRepository.findStock();\n        if (stock.available) {\n            System.out.println(\"stock available\");\n        }\n    }\n}"
+        },
+        "error": null,
+        "progress": true,
+        "newEvidence": [
+          "File:InventoryService.java",
+          "Source:InventoryService.java:1",
+          "Source:InventoryService.java:3",
+          "Source:InventoryService.java:4",
+          "Source:InventoryService.java:6",
+          "Source:InventoryService.java:7",
+          "Source:InventoryService.java:8",
+          "Source:InventoryService.java:10",
+          "Source:InventoryService.java:11",
+          "Source:InventoryService.java:12",
+          "Source:InventoryService.java:13",
+          "Source:InventoryService.java:14",
+          "Source:InventoryService.java:15",
+          "Source:InventoryService.java:16"
+        ],
+        "policyStatus": null,
+        "toolExecuted": true
+      },
+      {
+        "step": 3,
+        "tool": "findCallers",
+        "input": {
+          "symbolId": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock"
+        },
+        "observation": {
+          "tool": "findCallers",
+          "success": true,
+          "data": [
+            {
+              "symbol": {
+                "id": "OrderService.java:10:12:METHOD:demo.order.OrderService.createOrder",
+                "name": "createOrder",
+                "qualifiedName": "demo.order.OrderService.createOrder",
+                "type": "METHOD",
+                "language": "JAVA",
+                "filePath": "OrderService.java",
+                "startLine": 10,
+                "endLine": 12,
+                "parentSymbolId": "OrderService.java:3:13:CLASS:demo.order.OrderService",
+                "signature": "createOrder()",
+                "module": "demo.order"
+              },
+              "relation": {
+                "id": "OrderService.java:11:CALLS:OrderService.java:10:12:METHOD:demo.order.OrderService.createOrder:checkStock",
+                "sourceSymbolId": "OrderService.java:10:12:METHOD:demo.order.OrderService.createOrder",
+                "targetSymbolId": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock",
+                "targetName": "checkStock",
+                "type": "CALLS",
+                "filePath": "OrderService.java",
+                "line": 11,
+                "resolved": true,
+                "evidence": "inventoryService.checkStock()",
+                "resolutionMethod": "RECEIVER_TYPE_BINDING"
+              }
+            }
+          ],
+          "error": null,
+          "text": "findCallers executed successfully"
+        },
+        "observationText": "findCallers executed successfully",
+        "success": true,
+        "output": [
+          {
+            "symbol": {
+              "id": "OrderService.java:10:12:METHOD:demo.order.OrderService.createOrder",
+              "name": "createOrder",
+              "qualifiedName": "demo.order.OrderService.createOrder",
+              "type": "METHOD",
+              "language": "JAVA",
+              "filePath": "OrderService.java",
+              "startLine": 10,
+              "endLine": 12,
+              "parentSymbolId": "OrderService.java:3:13:CLASS:demo.order.OrderService",
+              "signature": "createOrder()",
+              "module": "demo.order"
+            },
+            "relation": {
+              "id": "OrderService.java:11:CALLS:OrderService.java:10:12:METHOD:demo.order.OrderService.createOrder:checkStock",
+              "sourceSymbolId": "OrderService.java:10:12:METHOD:demo.order.OrderService.createOrder",
+              "targetSymbolId": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock",
+              "targetName": "checkStock",
+              "type": "CALLS",
+              "filePath": "OrderService.java",
+              "line": 11,
+              "resolved": true,
+              "evidence": "inventoryService.checkStock()",
+              "resolutionMethod": "RECEIVER_TYPE_BINDING"
+            }
+          }
+        ],
+        "error": null,
+        "progress": true,
+        "newEvidence": [
+          "Symbols:1",
+          "CallEdges:1"
+        ],
+        "policyStatus": null,
+        "toolExecuted": true
+      },
+      {
+        "step": 4,
+        "tool": "readFile",
+        "input": {
+          "filePath": "OrderService.java",
+          "requestedRange": {
+            "startLine": 10,
+            "endLine": 12
+          }
+        },
+        "observation": {
+          "tool": "readFile",
+          "success": true,
+          "data": {
+            "filePath": "OrderService.java",
+            "language": "JAVA",
+            "requestedRange": {
+              "startLine": 1,
+              "endLine": 13
+            },
+            "content": "package demo.order;\n\npublic class OrderService {\n    private final InventoryService inventoryService;\n\n    public OrderService(InventoryService inventoryService) {\n        this.inventoryService = inventoryService;\n    }\n\n    public void createOrder() {\n        inventoryService.checkStock();\n    }\n}"
+          },
+          "error": null,
+          "text": "readFile executed successfully"
+        },
+        "observationText": "readFile executed successfully",
+        "success": true,
+        "output": {
+          "filePath": "OrderService.java",
+          "language": "JAVA",
+          "requestedRange": {
+            "startLine": 1,
+            "endLine": 13
+          },
+          "content": "package demo.order;\n\npublic class OrderService {\n    private final InventoryService inventoryService;\n\n    public OrderService(InventoryService inventoryService) {\n        this.inventoryService = inventoryService;\n    }\n\n    public void createOrder() {\n        inventoryService.checkStock();\n    }\n}"
+        },
+        "error": null,
+        "progress": true,
+        "newEvidence": [
+          "File:OrderService.java",
+          "Source:OrderService.java:1",
+          "Source:OrderService.java:3",
+          "Source:OrderService.java:4",
+          "Source:OrderService.java:6",
+          "Source:OrderService.java:7",
+          "Source:OrderService.java:8",
+          "Source:OrderService.java:10",
+          "Source:OrderService.java:11",
+          "Source:OrderService.java:12",
+          "Source:OrderService.java:13"
+        ],
+        "policyStatus": null,
+        "toolExecuted": true
+      },
+      {
+        "step": 5,
+        "tool": "searchSymbol",
+        "input": {
+          "language": "JAVA",
+          "name": "findStock",
+          "qualifiedName": "InventoryRepository.findStock",
+          "type": "METHOD"
+        },
+        "observation": {
+          "tool": "searchSymbol",
+          "success": true,
+          "data": [
+            {
+              "id": "InventoryRepository.java:4:6:METHOD:demo.order.InventoryRepository.findStock",
+              "name": "findStock",
+              "qualifiedName": "demo.order.InventoryRepository.findStock",
+              "type": "METHOD",
+              "language": "JAVA",
+              "filePath": "InventoryRepository.java",
+              "startLine": 4,
+              "endLine": 6,
+              "parentSymbolId": "InventoryRepository.java:3:7:CLASS:demo.order.InventoryRepository",
+              "signature": "findStock()",
+              "module": "demo.order"
+            }
+          ],
+          "error": null,
+          "text": "searchSymbol executed successfully"
+        },
+        "observationText": "searchSymbol executed successfully",
+        "success": true,
+        "output": [
+          {
+            "id": "InventoryRepository.java:4:6:METHOD:demo.order.InventoryRepository.findStock",
+            "name": "findStock",
+            "qualifiedName": "demo.order.InventoryRepository.findStock",
+            "type": "METHOD",
+            "language": "JAVA",
+            "filePath": "InventoryRepository.java",
+            "startLine": 4,
+            "endLine": 6,
+            "parentSymbolId": "InventoryRepository.java:3:7:CLASS:demo.order.InventoryRepository",
+            "signature": "findStock()",
+            "module": "demo.order"
+          }
+        ],
+        "error": null,
+        "progress": true,
+        "newEvidence": [
+          "Symbol:demo.order.InventoryRepository.findStock"
+        ],
+        "policyStatus": null,
+        "toolExecuted": true
+      },
+      {
+        "step": 6,
+        "tool": "readFile",
+        "input": {
+          "filePath": "InventoryRepository.java",
+          "requestedRange": {
+            "startLine": 4,
+            "endLine": 6
+          }
+        },
+        "observation": {
+          "tool": "readFile",
+          "success": true,
+          "data": {
+            "filePath": "InventoryRepository.java",
+            "language": "JAVA",
+            "requestedRange": {
+              "startLine": 1,
+              "endLine": 7
+            },
+            "content": "package demo.order;\n\npublic class InventoryRepository {\n    public Inventory findStock() {\n        return null;\n    }\n}"
+          },
+          "error": null,
+          "text": "readFile executed successfully"
+        },
+        "observationText": "readFile executed successfully",
+        "success": true,
+        "output": {
+          "filePath": "InventoryRepository.java",
+          "language": "JAVA",
+          "requestedRange": {
+            "startLine": 1,
+            "endLine": 7
+          },
+          "content": "package demo.order;\n\npublic class InventoryRepository {\n    public Inventory findStock() {\n        return null;\n    }\n}"
+        },
+        "error": null,
+        "progress": true,
+        "newEvidence": [
+          "File:InventoryRepository.java",
+          "Source:InventoryRepository.java:1",
+          "Source:InventoryRepository.java:3",
+          "Source:InventoryRepository.java:4",
+          "Source:InventoryRepository.java:5",
+          "Source:InventoryRepository.java:6",
+          "Source:InventoryRepository.java:7"
+        ],
+        "policyStatus": null,
+        "toolExecuted": true
+      }
+    ],
+    "answer": "```json\n{\n  \"issue_type\": \"RUNTIME_ERROR\",\n  \"summary\": \"NullPointerException in InventoryService.checkStock due to null return from InventoryRepository.findStock\",\n  \"location\": {\n    \"file\": \"InventoryService.java\",\n    \"line\": 11,\n    \"symbol\": \"checkStock\"\n  },\n  \"root_cause\": \"InventoryRepository.findStock returns null, which causes NullPointerException when accessed in InventoryService.checkStock\",\n  \"evidence\": [\n    {\n      \"file\": \"InventoryService.java\",\n      \"line\": 11,\n      \"symbol\": \"checkStock\",\n      \"code\": \"Inventory stock = inventoryRepository.findStock();\",\n      \"reason\": \"NullPointerException occurs here\"\n    },\n    {\n      \"file\": \"InventoryRepository.java\",\n      \"line\": 5,\n      \"symbol\": \"findStock\",\n      \"code\": \"return null;\",\n      \"reason\": \"findStock returns null, causing the NullPointerException\"\n    }\n  ],\n  \"call_chain\": [\n    \"OrderService.createOrder\",\n    \"InventoryService.checkStock\"\n  ],\n  \"fix_suggestion\": \"Ensure InventoryRepository.findStock does not return null or handle the null case appropriately in InventoryService.checkStock\",\n  \"uncertainty\": \"The exact cause of the null return in InventoryRepository.findStock is not determined from the provided evidence.\"\n}\n```",
+    "finalDiagnosis": {
+      "issue_type": "RUNTIME_ERROR",
+      "summary": "NullPointerException in InventoryService.checkStock due to null return from InventoryRepository.findStock",
+      "location": {
+        "file": "InventoryService.java",
+        "line": 12,
+        "symbol": "demo.order.InventoryService.checkStock"
+      },
+      "root_cause": "InventoryRepository.findStock returns null, which causes NullPointerException when accessed in InventoryService.checkStock",
+      "evidence": [
+        {
+          "file": "InventoryService.java",
+          "line": 11,
+          "symbol": "demo.order.InventoryService.checkStock",
+          "code": "Inventory stock = inventoryRepository.findStock();",
+          "reason": "readFile 返回的源码",
+          "kind": "FACT",
+          "source_tool": "readFile",
+          "source_step": 2
+        },
+        {
+          "file": "InventoryRepository.java",
+          "line": 5,
+          "symbol": "demo.order.InventoryRepository.findStock",
+          "code": "return null;",
+          "reason": "readFile 返回的源码",
+          "kind": "FACT",
+          "source_tool": "readFile",
+          "source_step": 6
+        },
+        {
+          "file": "InventoryService.java",
+          "line": 12,
+          "symbol": "demo.order.InventoryService.checkStock",
+          "code": "if (stock.available) {",
+          "reason": "readFile 返回的源码",
+          "kind": "FACT",
+          "source_tool": "readFile",
+          "source_step": 2
+        }
+      ],
+      "call_chain": [
+        "demo.order.OrderService.createOrder",
+        "demo.order.InventoryService.checkStock"
+      ],
+      "fix_suggestion": "Ensure InventoryRepository.findStock does not return null or handle the null case appropriately in InventoryService.checkStock",
+      "uncertainty": "The exact cause of the null return in InventoryRepository.findStock is not determined from the provided evidence. 该返回值关联仅由局部源码/类型文本支持，静态调用图未解析该边；需运行时确认。",
+      "root_cause_kind": "INFERENCE"
+    },
+    "rawModelOutput": "```json\n{\n  \"issue_type\": \"RUNTIME_ERROR\",\n  \"summary\": \"NullPointerException in InventoryService.checkStock due to null return from InventoryRepository.findStock\",\n  \"location\": {\n    \"file\": \"InventoryService.java\",\n    \"line\": 11,\n    \"symbol\": \"checkStock\"\n  },\n  \"root_cause\": \"InventoryRepository.findStock returns null, which causes NullPointerException when accessed in InventoryService.checkStock\",\n  \"evidence\": [\n    {\n      \"file\": \"InventoryService.java\",\n      \"line\": 11,\n      \"symbol\": \"checkStock\",\n      \"code\": \"Inventory stock = inventoryRepository.findStock();\",\n      \"reason\": \"NullPointerException occurs here\"\n    },\n    {\n      \"file\": \"InventoryRepository.java\",\n      \"line\": 5,\n      \"symbol\": \"findStock\",\n      \"code\": \"return null;\",\n      \"reason\": \"findStock returns null, causing the NullPointerException\"\n    }\n  ],\n  \"call_chain\": [\n    \"OrderService.createOrder\",\n    \"InventoryService.checkStock\"\n  ],\n  \"fix_suggestion\": \"Ensure InventoryRepository.findStock does not return null or handle the null case appropriately in InventoryService.checkStock\",\n  \"uncertainty\": \"The exact cause of the null return in InventoryRepository.findStock is not determined from the provided evidence.\"\n}\n```",
+    "diagnosisIssues": [
+      "CALL_EDGE_NOT_VERIFIED: 返回值链仅有局部源码/类型关联，缺少已解析 CALLS 边",
+      "EVIDENCE_PROJECTED_FROM_TOOL: 3 verified facts",
+      "MODEL_LINE_MISMATCH: 使用 Observation 中的真实位置"
+    ],
+    "diagnosisStatus": "VALID",
+    "userMessage": null,
+    "evidenceProjection": {
+      "modelClaim": {
+        "location": {
+          "file": "InventoryService.java",
+          "line": 11,
+          "symbol": "checkStock"
+        },
+        "call_chain": [
+          "OrderService.createOrder",
+          "InventoryService.checkStock"
+        ],
+        "evidence": [
+          {
+            "file": "InventoryService.java",
+            "line": 11,
+            "symbol": "checkStock",
+            "code": "Inventory stock = inventoryRepository.findStock();",
+            "reason": "NullPointerException occurs here",
+            "kind": "FACT",
+            "source_tool": null,
+            "source_step": null
+          },
+          {
+            "file": "InventoryRepository.java",
+            "line": 5,
+            "symbol": "findStock",
+            "code": "return null;",
+            "reason": "findStock returns null, causing the NullPointerException",
+            "kind": "FACT",
+            "source_tool": null,
+            "source_step": null
+          }
+        ]
+      },
+      "systemResult": {
+        "location": {
+          "file": "InventoryService.java",
+          "line": 12,
+          "symbol": "demo.order.InventoryService.checkStock"
+        },
+        "call_chain": [
+          "demo.order.OrderService.createOrder",
+          "demo.order.InventoryService.checkStock"
+        ],
+        "projected_fact_count": 3
+      },
+      "dataFlowChain": {
+        "return_source": {
+          "file": "InventoryRepository.java",
+          "line": 5,
+          "symbol_id": "InventoryRepository.java:4:6:METHOD:demo.order.InventoryRepository.findStock",
+          "code": "return null;",
+          "evidence_type": "RETURN_VALUE",
+          "source_tool": "readFile",
+          "source_step": 6
+        },
+        "assignment": {
+          "file": "InventoryService.java",
+          "line": 11,
+          "symbol_id": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock",
+          "code": "Inventory stock = inventoryRepository.findStock();",
+          "evidence_type": "ASSIGNMENT",
+          "source_tool": "readFile",
+          "source_step": 2
+        },
+        "exception_site": {
+          "file": "InventoryService.java",
+          "line": 12,
+          "symbol_id": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock",
+          "code": "if (stock.available) {",
+          "evidence_type": "DEREFERENCE",
+          "source_tool": "readFile",
+          "source_step": 2
+        },
+        "linkage": "OBSERVED_OWNER_TYPE",
+        "resolved_call_edge": null,
+        "candidate_method": "findStock",
+        "max_depth": 3
+      },
+      "verifiedSymbolCount": 3,
+      "verifiedSourceLineCount": 29,
+      "verifiedCallEdgeCount": 1
+    },
+    "completionDecision": "COMPLETE",
+    "executionState": {
+      "seen_tool_calls": 6,
+      "discovered_symbols": [
+        {
+          "id": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock",
+          "name": "checkStock",
+          "qualifiedName": "demo.order.InventoryService.checkStock",
+          "type": "METHOD",
+          "language": "JAVA",
+          "filePath": "InventoryService.java",
+          "startLine": 10,
+          "endLine": 15,
+          "parentSymbolId": "InventoryService.java:3:16:CLASS:demo.order.InventoryService",
+          "signature": "checkStock()",
+          "module": "demo.order"
+        },
+        {
+          "id": "OrderService.java:10:12:METHOD:demo.order.OrderService.createOrder",
+          "name": "createOrder",
+          "qualifiedName": "demo.order.OrderService.createOrder",
+          "type": "METHOD",
+          "language": "JAVA",
+          "filePath": "OrderService.java",
+          "startLine": 10,
+          "endLine": 12,
+          "parentSymbolId": "OrderService.java:3:13:CLASS:demo.order.OrderService",
+          "signature": "createOrder()",
+          "module": "demo.order"
+        },
+        {
+          "id": "InventoryRepository.java:4:6:METHOD:demo.order.InventoryRepository.findStock",
+          "name": "findStock",
+          "qualifiedName": "demo.order.InventoryRepository.findStock",
+          "type": "METHOD",
+          "language": "JAVA",
+          "filePath": "InventoryRepository.java",
+          "startLine": 4,
+          "endLine": 6,
+          "parentSymbolId": "InventoryRepository.java:3:7:CLASS:demo.order.InventoryRepository",
+          "signature": "findStock()",
+          "module": "demo.order"
+        }
+      ],
+      "discovered_files": [
+        "InventoryRepository.java",
+        "InventoryService.java",
+        "OrderService.java"
+      ],
+      "discovered_call_edges": [
+        {
+          "source_id": "OrderService.java:10:12:METHOD:demo.order.OrderService.createOrder",
+          "target_id": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock",
+          "file": "OrderService.java",
+          "line": 11,
+          "code": "inventoryService.checkStock()",
+          "source_tool": "findCallers",
+          "source_step": 3,
+          "from": "demo.order.OrderService.createOrder",
+          "to": "demo.order.InventoryService.checkStock"
+        }
+      ],
+      "graph_path_evidence": [],
+      "collected_evidence_count": 29,
+      "last_progress_step": 6,
+      "consecutive_no_progress": 0,
+      "failed_searches": [],
+      "current_evidence_requirements": [
+        "exception_location",
+        "target_method_source",
+        "caller_context",
+        "callee_context",
+        "error_value_origin"
+      ],
+      "evidence_checklist": {
+        "target_symbol": true,
+        "target_source": true,
+        "assignment": true,
+        "invalid_value_origin": true,
+        "trigger_operation": true,
+        "source_to_usage_linkage": true,
+        "related_call_edge": false
+      },
+      "missing_evidence": [],
+      "verified_call_chain": [],
+      "partial_call_chain": [
+        "demo.order.InventoryService.checkStock"
+      ],
+      "duplicate_calls": 0,
+      "no_progress_calls": 0,
+      "policy_events": [],
+      "completion_decision": "COMPLETE",
+      "verified_evidence_counts": {
+        "symbols": 3,
+        "source_lines": 29,
+        "resolved_call_edges": 1
+      },
+      "data_flow_chain": {
+        "assignment": {
+          "file": "InventoryService.java",
+          "line": 11,
+          "symbol_id": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock",
+          "code": "Inventory stock = inventoryRepository.findStock();",
+          "evidence_type": "ASSIGNMENT",
+          "source_tool": "readFile",
+          "source_step": 2
+        },
+        "invalid_value_origin": {
+          "file": "InventoryRepository.java",
+          "line": 5,
+          "symbol_id": "InventoryRepository.java:4:6:METHOD:demo.order.InventoryRepository.findStock",
+          "code": "return null;",
+          "evidence_type": "RETURN_VALUE",
+          "source_tool": "readFile",
+          "source_step": 6
+        },
+        "trigger_operation": {
+          "file": "InventoryService.java",
+          "line": 12,
+          "symbol_id": "InventoryService.java:10:15:METHOD:demo.order.InventoryService.checkStock",
+          "code": "if (stock.available) {",
+          "evidence_type": "DEREFERENCE",
+          "source_tool": "readFile",
+          "source_step": 2
+        },
+        "related_call_edge": null,
+        "source_to_usage_linkage": "OBSERVED_OWNER_TYPE",
+        "candidate_method": "findStock",
+        "callee_symbol": {
+          "symbol_id": "InventoryRepository.java:4:6:METHOD:demo.order.InventoryRepository.findStock",
+          "raw_name": "demo.order.InventoryRepository.findStock",
+          "file": "InventoryRepository.java",
+          "line": 4,
+          "end_line": 6,
+          "symbol_type": "METHOD",
+          "language": "JAVA",
+          "signature": "findStock()",
+          "source_tool": "searchSymbol",
+          "source_step": 5
+        }
+      }
+    },
+    "plan": {
+      "task_type": "RUNTIME_ERROR",
+      "analysis_goal": "定位异常位置、调用链和错误值来源",
+      "target_keywords": [
+        "checkStock"
+      ],
+      "target_source": "QUERY",
+      "required_evidence": [
+        "exception_location",
+        "target_method_source",
+        "caller_context",
+        "callee_context",
+        "error_value_origin"
+      ],
+      "preferred_tools": [
+        "searchSymbol",
+        "findCallers",
+        "findCallees",
+        "readFile"
+      ],
+      "stop_condition": "找到异常位置、错误值来源及对应源码证据；否则明确证据不足"
+    }
+  }
+}
