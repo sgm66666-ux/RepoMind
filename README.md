@@ -122,8 +122,8 @@ docs/               发布、评测与项目说明
 
 ## 当前边界
 
-- Call Graph 来自静态分析，不证明运行时路径实际执行。
-- Python 动态分派采取保守解析。
-- 尚未覆盖配置文件的语义关联。
+- Call Graph 基于静态分析，不代表实际运行时调用路径。
+- 对动态分派与多实现调用采用保守解析，存在歧义时保持 unresolved。
+- 暂未覆盖配置文件的语义关联。
 
 更多说明见[企业订单演示记录](docs/showcase/enterprise-order-showcase.md)、[发布文档](docs/release/)、[评测记录](docs/evaluation/)和[项目介绍](docs/interview/)。
