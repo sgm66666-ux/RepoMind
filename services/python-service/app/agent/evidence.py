@@ -56,7 +56,7 @@ def classify_line(code: str) -> str:
         return "RETURN_VALUE"
     if re.search(r"(?<![=!<>])=(?!=)", stripped):
         return "ASSIGNMENT"
-    if re.search(r"\b[A-Za-z_]\w*\s*(?:\[|\.(?!\w*\())", stripped):
+    if re.search(r"\b[A-Za-z_]\w*\s*(?:\[|\.)", stripped):
         return "DEREFERENCE"
     if re.search(r"\b(?:if|while)\s*\(", stripped):
         return "CONDITION"
@@ -261,7 +261,8 @@ class VerifiedEvidenceStore:
                     return found
         return None
 
-    def trace_value_source(self, target_id: str | None, max_depth: int = 3) -> dict:
+    def trace_value_source(self, target_id: str | None, max_depth: int = 3,
+                           preferred_callee_id: str | None = None) -> dict:
         """Bounded local assignment -> call -> return investigation; never assert runtime value."""
         target = self.symbols.get(target_id or "")
         if not target:
@@ -275,10 +276,11 @@ class VerifiedEvidenceStore:
                 continue
             variable, owner, method = parsed
             triggers = [fact for fact in lines if fact.line > assignment.line and re.search(
-                rf"\b{re.escape(variable)}\s*(?:\[|\.(?!\w*\())", fact.code)]
+                rf"\b{re.escape(variable)}\s*(?:\[|\.)", fact.code)]
             candidates = [item for item in self.symbols.values() if item.raw_name.endswith("." + method) and
                           item.symbol_type in {"METHOD", "FUNCTION"} and item.language == target.language]
-            callee = candidates[0] if len(candidates) == 1 else None
+            preferred = self.symbols.get(preferred_callee_id or "")
+            callee = preferred if preferred in candidates else (candidates[0] if len(candidates) == 1 else None)
             resolved = bool(callee and (target.symbol_id, callee.symbol_id) in self.edges)
             textual = bool(callee and self._owner_link(owner, callee, target.file))
             origin = self._return_source(callee, max_depth - 1, set()) if callee else None

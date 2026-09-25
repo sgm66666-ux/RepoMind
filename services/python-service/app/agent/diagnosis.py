@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from app.agent.planner import ExecutionPlan
-from app.agent.evidence import normalize_source_code
+from app.agent.evidence import classify_line, normalize_source_code
 
 
 class DiagnosisLocation(BaseModel):
@@ -27,6 +27,7 @@ class DiagnosisEvidence(BaseModel):
     kind: Literal["FACT"] = "FACT"
     source_tool: str | None = None
     source_step: int | None = None
+    evidence_type: str | None = None
 
 
 class FinalDiagnosis(BaseModel):
@@ -167,7 +168,9 @@ def validate_evidence_against_trace(evidence: list[dict], trace: list[dict]) -> 
                           "symbol": symbol_name, "code": fact["code"],
                           "reason": {"readFile": "readFile 返回的源码", "call_relation": "已解析的 CALLS 关系",
                                      "searchSymbol": "searchSymbol 返回的 Symbol"}[fact["tool"]],
-                          "kind": "FACT", "source_tool": fact["tool"], "source_step": fact["step"]})
+                          "kind": "FACT", "source_tool": fact["tool"], "source_step": fact["step"],
+                          "evidence_type": (classify_line(fact["code"]) if fact["tool"] == "readFile" else
+                                            "CALL_EDGE" if fact["tool"] == "call_relation" else "SYMBOL")})
     return validated, issues
 
 

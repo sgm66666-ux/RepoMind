@@ -35,7 +35,7 @@ class AgentLoop:
         messages.append({"role": "user", "content": question})
         plan_result = {"plan": plan.as_dict()} if plan is not None else {}
         trace: list[dict] = []
-        state = AgentExecutionState(question, plan)
+        state = AgentExecutionState(question, plan, analysis_index=getattr(self.registry, "analysis_index", None))
         tool_schemas = [
             {"type": "function", "function": {"name": item.name, "description": item.description, "parameters": item.inputSchema}}
             for item in self.registry.definitions()

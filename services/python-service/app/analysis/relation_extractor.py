@@ -49,23 +49,56 @@ class RelationExtractor:
                 )
             )
 
-        def declarations(node) -> dict[str, str]:
-            environment: dict[str, str] = {}
-            for candidate in iter_nodes(node):
-                if candidate.type not in {"field_declaration", "local_variable_declaration", "typed_parameter"}:
-                    continue
-                type_node = candidate.child_by_field_name("type")
-                type_name = node_text(type_node, source_file.content).split("<", 1)[0] if type_node else None
-                if not type_name:
-                    continue
-                for child in iter_nodes(candidate):
-                    if child.type in {"variable_declarator", "identifier"}:
-                        name_node = child.child_by_field_name("name") if child.type == "variable_declarator" else child
-                        if name_node is not None:
-                            environment.setdefault(node_text(name_node, source_file.content), type_name)
-            return environment
+        def java_environment(invocation) -> dict[str, ReceiverBinding]:
+            """Bind receivers only in their lexical Java scope; never reuse another method's locals."""
+            method_node = invocation
+            while method_node and method_node.type not in {"method_declaration", "constructor_declaration"}:
+                method_node = method_node.parent
+            class_node = method_node.parent if method_node else None
+            while class_node and class_node.type != "class_declaration":
+                class_node = class_node.parent
+            bindings: dict[str, ReceiverBinding] = {}
 
-        environment = declarations(tree.root_node)
+            def bind(candidate, origin: str) -> None:
+                type_node = candidate.child_by_field_name("type")
+                type_name = node_text(type_node, source_file.content).split("<", 1)[0] if type_node else ""
+                owner = resolver.resolve_name(type_name, enclosing_symbol(invocation), imports) if type_name else None
+                if owner is None or owner.type not in {SymbolType.CLASS, SymbolType.INTERFACE}:
+                    return
+                current_symbol = enclosing_symbol(invocation)
+                if not (owner.filePath == source_file.filePath or
+                        current_symbol and owner.module == current_symbol.module or
+                        owner.qualifiedName in imports or f"{owner.module}.*" in imports or
+                        type_name == owner.qualifiedName):
+                    return
+                names = ([candidate.child_by_field_name("name")] if candidate.type in
+                         {"formal_parameter", "spread_parameter", "enhanced_for_statement"} else
+                         [item.child_by_field_name("name") for item in iter_nodes(candidate)
+                          if item.type == "variable_declarator"])
+                for name_node in names:
+                    if name_node is not None:
+                        bindings[node_text(name_node, source_file.content)] = ReceiverBinding(owner.id, origin)
+
+            if class_node:
+                body = class_node.child_by_field_name("body")
+                if body:
+                    for child in body.named_children:
+                        if child.type == "field_declaration":
+                            bind(child, "RECEIVER_TYPE_BINDING")
+            if method_node:
+                parameters = method_node.child_by_field_name("parameters")
+                if parameters:
+                    for candidate in iter_nodes(parameters):
+                        if candidate.type in {"formal_parameter", "spread_parameter"}:
+                            bind(candidate, "PARAMETER_RECEIVER_TYPE")
+                for candidate in iter_nodes(method_node):
+                    if candidate.type == "enhanced_for_statement" and candidate.start_byte <= invocation.start_byte < candidate.end_byte:
+                        bind(candidate, "ENHANCED_FOR_RECEIVER_TYPE")
+                    elif candidate.type == "local_variable_declaration" and candidate.start_byte < invocation.start_byte:
+                        block = candidate.parent
+                        if block and block.type == "block" and block.start_byte <= invocation.start_byte < block.end_byte:
+                            bind(candidate, "LOCAL_RECEIVER_TYPE")
+            return bindings
 
         # Bind only direct constructor assignments. An alias is accepted only when
         # its import names one unique indexed class; unrelated same-name classes
@@ -174,7 +207,8 @@ class RelationExtractor:
                         target_name = node_text(name_node, source_file.content)
                         receiver_node = node.child_by_field_name("object")
                         receiver = node_text(receiver_node, source_file.content) if receiver_node is not None else None
-                        target, method = resolver.resolve_call_with_method(target_name, current, receiver, environment)
+                        target, method = resolver.resolve_call_with_method(
+                            target_name, current, receiver, java_environment(node), imports)
                         add(current, target_name, RelationType.CALLS, node, text, target, method)
                 elif node.type == "type_identifier" and current is not None:
                     target_name = text

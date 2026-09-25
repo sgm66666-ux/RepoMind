@@ -32,6 +32,68 @@ class Service {
     assert calls[0].resolutionMethod == "RECEIVER_TYPE_BINDING"
 
 
+def test_java_parameter_and_local_bindings_are_scoped_and_overloads_remain_unresolved() -> None:
+    source = """class Alpha { void hit() {} }
+class Beta { void hit() {} }
+class Service {
+  void first(Alpha target) { target.hit(); }
+  void second(Beta target) { target.hit(); }
+}
+class Overloaded {
+  void run(int value) {}
+  void run(String value) {}
+}
+class Caller {
+  void call(Overloaded target) { target.run(1); }
+}
+"""
+    file = SourceFile("Scope.java", Language.JAVA, source)
+    tree = JavaParser().parse(source)
+    symbols = JavaSymbolExtractor().extract(tree, source, file.filePath)
+    relations = RelationExtractor().extract(file, tree, symbols, SymbolResolver(symbols))
+    calls = [item for item in relations if item.type == RelationType.CALLS]
+    hits = [item for item in calls if item.targetName == "hit"]
+    assert [item.resolutionMethod for item in hits] == ["PARAMETER_RECEIVER_TYPE"] * 2
+    assert [next(symbol.parentSymbolId for symbol in symbols if symbol.id == item.targetSymbolId)
+            for item in hits] == [next(item.id for item in symbols if item.name == name and item.type == SymbolType.CLASS)
+                               for name in ("Alpha", "Beta")]
+    overloaded = next(item for item in calls if item.targetName == "run")
+    assert not overloaded.resolved and overloaded.targetSymbolId is None
+
+
+def test_java_static_class_receiver_requires_unique_non_overloaded_method() -> None:
+    source = """class Factory {
+  static Factory create() { return new Factory(); }
+  static Factory create(String name) { return new Factory(); }
+  static void ping() {}
+}
+class Caller { void run() { Factory.ping(); Factory.create(); } }
+"""
+    file = SourceFile("Static.java", Language.JAVA, source)
+    tree = JavaParser().parse(source)
+    symbols = JavaSymbolExtractor().extract(tree, source, file.filePath)
+    calls = [item for item in RelationExtractor().extract(file, tree, symbols, SymbolResolver(symbols))
+             if item.type == RelationType.CALLS]
+    assert next(item for item in calls if item.targetName == "ping").resolutionMethod == "STATIC_CLASS_RECEIVER"
+    assert not next(item for item in calls if item.targetName == "create").resolved
+
+
+def test_java_receiver_does_not_bind_unimported_class_but_accepts_package_wildcard() -> None:
+    library = SourceFile("lib/Remote.java", Language.JAVA,
+                         "package lib; class Remote { static void ping() {} }")
+    clients = [SourceFile("user/Client.java", Language.JAVA,
+                          f"package user; {import_line} class Client {{ void run() {{ Remote.ping(); }} }}")
+               for import_line in ("", "import lib.*;")]
+    for client, expected in zip(clients, (False, True)):
+        files = [library, client]
+        trees = [JavaParser().parse(item.content) for item in files]
+        symbols = [symbol for item, tree in zip(files, trees)
+                   for symbol in JavaSymbolExtractor().extract(tree, item.content, item.filePath)]
+        relations = RelationExtractor().extract(client, trees[-1], symbols, SymbolResolver(symbols))
+        call = next(item for item in relations if item.type == RelationType.CALLS)
+        assert call.resolved is expected
+
+
 def test_java_import_extends_and_implements_relations_are_extracted() -> None:
     source = """import java.util.List;
 interface Contract {}

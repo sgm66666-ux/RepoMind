@@ -39,8 +39,10 @@ class SymbolResolver:
 
         if imports:
             imported = [item for item in imports if item.rsplit(".", 1)[-1] == target_name]
-            for qualified in imported:
-                candidate = self.by_qualified.get(qualified)
+            if len(imported) > 1:
+                return None
+            if imported:
+                candidate = self.by_qualified.get(imported[0])
                 if candidate:
                     return candidate
 
@@ -69,6 +71,7 @@ class SymbolResolver:
         current_symbol: Symbol | None,
         receiver: str | None = None,
         type_environment: dict[str, str | ReceiverBinding] | None = None,
+        imports: set[str] | None = None,
     ) -> tuple[Symbol | None, str]:
         type_environment = type_environment or {}
         receiver = receiver.removeprefix("this.") if receiver else None
@@ -100,6 +103,17 @@ class SymbolResolver:
                 target = self.by_qualified.get(f"{classes[0].qualifiedName}.{method_name}")
                 if target and target.type == SymbolType.METHOD:
                     return target, method
+            if not classes and current_symbol and current_symbol.language == Language.JAVA and "." not in receiver:
+                # Java permits ClassName.staticMethod(); only a uniquely indexed
+                # class and a non-overloaded method are safe to bind here.
+                owners = [item for item in self.by_name.get(receiver, []) if item.type == SymbolType.CLASS]
+                if len(owners) == 1 and (owners[0].filePath == current_symbol.filePath or
+                                         owners[0].module == current_symbol.module or
+                                         owners[0].qualifiedName in (imports or set()) or
+                                         f"{owners[0].module}.*" in (imports or set())):
+                    target = self.by_qualified.get(f"{owners[0].qualifiedName}.{method_name}")
+                    if target and target.type == SymbolType.METHOD:
+                        return target, "STATIC_CLASS_RECEIVER"
             return None, "UNRESOLVED"
 
         if current_symbol:

@@ -1,0 +1,815 @@
+{
+  "runs": [
+    {
+      "run": 1,
+      "question": "为什么订单创建流程在 StockAllocator.allocate 库存预留阶段可能出现 NullPointerException？",
+      "provider": "ollama:qwen2.5-coder:14b:json-tool-compat",
+      "status": "COMPLETED",
+      "diagnosisStatus": "INVALID_FORMAT",
+      "completionDecision": "COMPLETE",
+      "trace": [
+        {
+          "step": 1,
+          "tool": "searchSymbol",
+          "input": {
+            "language": "JAVA",
+            "name": "allocate",
+            "qualifiedName": "StockAllocator.allocate",
+            "type": "METHOD"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 2,
+          "tool": "readFile",
+          "input": {
+            "filePath": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "requestedRange": {
+              "startLine": 7,
+              "endLine": 11
+            }
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 3,
+          "tool": "searchSymbol",
+          "input": {
+            "language": "JAVA",
+            "name": "findAvailableStock",
+            "qualifiedName": "InventoryRepository.findAvailableStock",
+            "type": "METHOD"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 4,
+          "tool": "readFile",
+          "input": {
+            "filePath": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "requestedRange": {
+              "startLine": 8,
+              "endLine": 12
+            }
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 5,
+          "tool": "findCallers",
+          "input": {
+            "symbolId": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 6,
+          "tool": "readFile",
+          "input": {
+            "filePath": "src/main/java/com/repomind/showcase/domain/inventory/InventoryService.java",
+            "requestedRange": {
+              "startLine": 7,
+              "endLine": 11
+            }
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        }
+      ],
+      "filesRead": [
+        "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+        "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+        "src/main/java/com/repomind/showcase/domain/inventory/InventoryService.java"
+      ],
+      "graphEvidence": [],
+      "verifiedEvidenceCounts": {
+        "symbols": 4,
+        "source_lines": 37,
+        "resolved_call_edges": 1
+      },
+      "crossFileEvidence": {
+        "applicable": true,
+        "complete": true,
+        "missing": [],
+        "chain": [
+          {
+            "type": "CALL_EDGE",
+            "source_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "target_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InventoryRepository.java:3:3:METHOD:com.repomind.showcase.infrastructure.repository.InventoryRepository.findAvailableStock",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "code": "repository.findAvailableStock(sku)",
+            "source_tool": "indexed_call_graph",
+            "source_step": 0,
+            "resolution_method": "RECEIVER_TYPE_BINDING"
+          },
+          {
+            "type": "IMPLEMENTS",
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 5,
+            "source_symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:5:13:CLASS:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository",
+            "target_symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InventoryRepository.java:3:3:INTERFACE:com.repomind.showcase.infrastructure.repository.InventoryRepository",
+            "source": "INDEXED_IMPLEMENTS_RELATION"
+          },
+          {
+            "type": "RETURN_VALUE",
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 10,
+            "symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:8:12:METHOD:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "code": "if (stock == null) return null;",
+            "evidence_type": "RETURN_VALUE",
+            "source_tool": "readFile",
+            "source_step": 4
+          },
+          {
+            "type": "ASSIGNMENT",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "symbol_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "Stock stock = repository.findAvailableStock(sku);",
+            "evidence_type": "ASSIGNMENT",
+            "source_tool": "readFile",
+            "source_step": 2
+          },
+          {
+            "type": "DEREFERENCE",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "if (stock.getAvailableQuantity() < quantity) throw new InventoryException(\"insufficient stock for \" + sku);",
+            "evidence_type": "DEREFERENCE",
+            "source_tool": "readFile",
+            "source_step": 2
+          }
+        ],
+        "implementation_candidate": {
+          "symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:8:12:METHOD:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+          "qualified_name": "com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+          "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+          "line": 8,
+          "end_line": 12,
+          "source": "UNIQUE_INDEXED_IMPLEMENTS_CANDIDATE"
+        },
+        "ambiguous_implementations": false,
+        "runtime_execution_proven": false,
+        "final_diagnosis_complete": false
+      },
+      "finalDiagnosis": null,
+      "diagnosisIssues": [
+        "FinalDiagnosis schema: ValidationError"
+      ],
+      "evidenceProjection": null
+    },
+    {
+      "run": 2,
+      "question": "为什么订单创建流程在 StockAllocator.allocate 库存预留阶段可能出现 NullPointerException？",
+      "provider": "ollama:qwen2.5-coder:14b:json-tool-compat",
+      "status": "COMPLETED",
+      "diagnosisStatus": "VALID",
+      "completionDecision": "COMPLETE",
+      "trace": [
+        {
+          "step": 1,
+          "tool": "searchSymbol",
+          "input": {
+            "language": "JAVA",
+            "name": "allocate",
+            "qualifiedName": "StockAllocator.allocate",
+            "type": "METHOD"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 2,
+          "tool": "readFile",
+          "input": {
+            "filePath": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 3,
+          "tool": "searchSymbol",
+          "input": {
+            "language": "JAVA",
+            "name": "findAvailableStock",
+            "qualifiedName": "InventoryRepository.findAvailableStock",
+            "type": "METHOD"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 4,
+          "tool": "readFile",
+          "input": {
+            "filePath": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 5,
+          "tool": "findCallers",
+          "input": {
+            "symbolId": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 6,
+          "tool": "readFile",
+          "input": {
+            "filePath": "src/main/java/com/repomind/showcase/domain/inventory/InventoryService.java"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        }
+      ],
+      "filesRead": [
+        "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+        "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+        "src/main/java/com/repomind/showcase/domain/inventory/InventoryService.java"
+      ],
+      "graphEvidence": [],
+      "verifiedEvidenceCounts": {
+        "symbols": 4,
+        "source_lines": 37,
+        "resolved_call_edges": 1
+      },
+      "crossFileEvidence": {
+        "applicable": true,
+        "complete": true,
+        "missing": [],
+        "chain": [
+          {
+            "type": "CALL_EDGE",
+            "source_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "target_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InventoryRepository.java:3:3:METHOD:com.repomind.showcase.infrastructure.repository.InventoryRepository.findAvailableStock",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "code": "repository.findAvailableStock(sku)",
+            "source_tool": "indexed_call_graph",
+            "source_step": 0,
+            "resolution_method": "RECEIVER_TYPE_BINDING"
+          },
+          {
+            "type": "IMPLEMENTS",
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 5,
+            "source_symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:5:13:CLASS:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository",
+            "target_symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InventoryRepository.java:3:3:INTERFACE:com.repomind.showcase.infrastructure.repository.InventoryRepository",
+            "source": "INDEXED_IMPLEMENTS_RELATION"
+          },
+          {
+            "type": "RETURN_VALUE",
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 10,
+            "symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:8:12:METHOD:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "code": "if (stock == null) return null;",
+            "evidence_type": "RETURN_VALUE",
+            "source_tool": "readFile",
+            "source_step": 4
+          },
+          {
+            "type": "ASSIGNMENT",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "symbol_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "Stock stock = repository.findAvailableStock(sku);",
+            "evidence_type": "ASSIGNMENT",
+            "source_tool": "readFile",
+            "source_step": 2
+          },
+          {
+            "type": "DEREFERENCE",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "if (stock.getAvailableQuantity() < quantity) throw new InventoryException(\"insufficient stock for \" + sku);",
+            "evidence_type": "DEREFERENCE",
+            "source_tool": "readFile",
+            "source_step": 2
+          }
+        ],
+        "implementation_candidate": {
+          "symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:8:12:METHOD:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+          "qualified_name": "com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+          "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+          "line": 8,
+          "end_line": 12,
+          "source": "UNIQUE_INDEXED_IMPLEMENTS_CANDIDATE"
+        },
+        "ambiguous_implementations": false,
+        "runtime_execution_proven": false,
+        "final_diagnosis_complete": true
+      },
+      "finalDiagnosis": {
+        "issue_type": "RUNTIME_ERROR",
+        "summary": "发现潜在空值解引用风险（静态证据）",
+        "location": {
+          "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+          "line": 9,
+          "symbol": "com.repomind.showcase.domain.inventory.StockAllocator.allocate"
+        },
+        "root_cause": "若已观察到的空值返回分支在运行时发生，随后对该值的解引用可能触发 NullPointerException；静态证据不能证明该分支实际执行。",
+        "evidence": [
+          {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "symbol": "com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "Stock stock = repository.findAvailableStock(sku);",
+            "reason": "readFile 返回的源码",
+            "kind": "FACT",
+            "source_tool": "readFile",
+            "source_step": 2,
+            "evidence_type": "ASSIGNMENT"
+          },
+          {
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 10,
+            "symbol": "com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "code": "if (stock == null) return null;",
+            "reason": "readFile 返回的源码",
+            "kind": "FACT",
+            "source_tool": "readFile",
+            "source_step": 4,
+            "evidence_type": "RETURN_VALUE"
+          },
+          {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol": "com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "if (stock.getAvailableQuantity() < quantity) throw new InventoryException(\"insufficient stock for \" + sku);",
+            "reason": "readFile 返回的源码",
+            "kind": "FACT",
+            "source_tool": "readFile",
+            "source_step": 2,
+            "evidence_type": "DEREFERENCE"
+          }
+        ],
+        "call_chain": [
+          "com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+          "com.repomind.showcase.infrastructure.repository.InventoryRepository.findAvailableStock"
+        ],
+        "fix_suggestion": "Add null checks before accessing methods on the Stock object to handle cases where the stock is not available.",
+        "uncertainty": "当前仅核验静态调用与两处源码；唯一接口实现是静态候选，未观察到运行时输入、实际分派或异常发生。",
+        "root_cause_kind": "INFERENCE"
+      },
+      "diagnosisIssues": [
+        "模型行号 src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:9 与 Observation 不符，已按源码修正为 8",
+        "STRUCTURAL_COMPATIBILITY: evidence[].evidence -> code, missing call_chain -> [], missing evidence[].reason -> pending verification, suggestion -> fix_suggestion；所有源码仍需 Observation 核验",
+        "CALL_CHAIN_PROJECTED_FROM_VERIFIED_STATIC_EDGE: not runtime execution",
+        "EVIDENCE_PROJECTED_FROM_TOOL: 3 verified facts",
+        "MODEL_LINE_MISMATCH: 模型行号已由 Observation 校正",
+        "RUNTIME_EXECUTION_NOT_OBSERVED: 模型的确定性运行时表述已降级为静态风险推断；原文保留在 rawModelOutput"
+      ],
+      "evidenceProjection": {
+        "modelClaim": {
+          "location": {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol": "allocate"
+          },
+          "call_chain": [],
+          "evidence": [
+            {
+              "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+              "line": 9,
+              "symbol": "allocate",
+              "code": "Stock stock = repository.findAvailableStock(sku);",
+              "reason": "模型提出的待核验片段",
+              "kind": "FACT",
+              "source_tool": null,
+              "source_step": null,
+              "evidence_type": null
+            },
+            {
+              "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+              "line": 10,
+              "symbol": "findAvailableStock",
+              "code": "if (stock == null) return null;",
+              "reason": "模型提出的待核验片段",
+              "kind": "FACT",
+              "source_tool": null,
+              "source_step": null,
+              "evidence_type": null
+            }
+          ]
+        },
+        "systemResult": {
+          "location": {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol": "com.repomind.showcase.domain.inventory.StockAllocator.allocate"
+          },
+          "call_chain": [
+            "com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "com.repomind.showcase.infrastructure.repository.InventoryRepository.findAvailableStock"
+          ],
+          "projected_fact_count": 3
+        },
+        "dataFlowChain": {
+          "return_source": {
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 10,
+            "symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:8:12:METHOD:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "code": "if (stock == null) return null;",
+            "evidence_type": "RETURN_VALUE",
+            "source_tool": "readFile",
+            "source_step": 4
+          },
+          "assignment": {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "symbol_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "Stock stock = repository.findAvailableStock(sku);",
+            "evidence_type": "ASSIGNMENT",
+            "source_tool": "readFile",
+            "source_step": 2
+          },
+          "exception_site": {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "if (stock.getAvailableQuantity() < quantity) throw new InventoryException(\"insufficient stock for \" + sku);",
+            "evidence_type": "DEREFERENCE",
+            "source_tool": "readFile",
+            "source_step": 2
+          },
+          "linkage": "UNIQUE_INTERFACE_IMPLEMENTATION_CANDIDATE",
+          "resolved_call_edge": {
+            "source_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "target_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InventoryRepository.java:3:3:METHOD:com.repomind.showcase.infrastructure.repository.InventoryRepository.findAvailableStock",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "code": "repository.findAvailableStock(sku)",
+            "source_tool": "indexed_call_graph",
+            "source_step": 0,
+            "resolution_method": "RECEIVER_TYPE_BINDING"
+          },
+          "candidate_method": "findAvailableStock",
+          "max_depth": 3,
+          "implementation_candidate": {
+            "symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:8:12:METHOD:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "qualified_name": "com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 8,
+            "end_line": 12,
+            "source": "UNIQUE_INDEXED_IMPLEMENTS_CANDIDATE"
+          },
+          "implementation_relation": {
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 5,
+            "source_symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:5:13:CLASS:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository",
+            "target_symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InventoryRepository.java:3:3:INTERFACE:com.repomind.showcase.infrastructure.repository.InventoryRepository",
+            "source": "INDEXED_IMPLEMENTS_RELATION"
+          }
+        },
+        "verifiedSymbolCount": 4,
+        "verifiedSourceLineCount": 37,
+        "verifiedCallEdgeCount": 1
+      }
+    },
+    {
+      "run": 3,
+      "question": "为什么订单创建流程在 StockAllocator.allocate 库存预留阶段可能出现 NullPointerException？",
+      "provider": "ollama:qwen2.5-coder:14b:json-tool-compat",
+      "status": "COMPLETED",
+      "diagnosisStatus": "VALID",
+      "completionDecision": "COMPLETE",
+      "trace": [
+        {
+          "step": 1,
+          "tool": "searchSymbol",
+          "input": {
+            "language": "JAVA",
+            "name": "allocate",
+            "qualifiedName": "StockAllocator.allocate",
+            "type": "METHOD"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 2,
+          "tool": "readFile",
+          "input": {
+            "filePath": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 3,
+          "tool": "searchSymbol",
+          "input": {
+            "language": "JAVA",
+            "name": "findAvailableStock",
+            "qualifiedName": "InventoryRepository.findAvailableStock",
+            "type": "METHOD"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 4,
+          "tool": "readFile",
+          "input": {
+            "filePath": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 5,
+          "tool": "findCallers",
+          "input": {
+            "symbolId": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        },
+        {
+          "step": 6,
+          "tool": "readFile",
+          "input": {
+            "filePath": "src/main/java/com/repomind/showcase/domain/inventory/InventoryService.java"
+          },
+          "success": true,
+          "progress": true,
+          "policyStatus": null
+        }
+      ],
+      "filesRead": [
+        "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+        "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+        "src/main/java/com/repomind/showcase/domain/inventory/InventoryService.java"
+      ],
+      "graphEvidence": [],
+      "verifiedEvidenceCounts": {
+        "symbols": 4,
+        "source_lines": 37,
+        "resolved_call_edges": 1
+      },
+      "crossFileEvidence": {
+        "applicable": true,
+        "complete": true,
+        "missing": [],
+        "chain": [
+          {
+            "type": "CALL_EDGE",
+            "source_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "target_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InventoryRepository.java:3:3:METHOD:com.repomind.showcase.infrastructure.repository.InventoryRepository.findAvailableStock",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "code": "repository.findAvailableStock(sku)",
+            "source_tool": "indexed_call_graph",
+            "source_step": 0,
+            "resolution_method": "RECEIVER_TYPE_BINDING"
+          },
+          {
+            "type": "IMPLEMENTS",
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 5,
+            "source_symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:5:13:CLASS:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository",
+            "target_symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InventoryRepository.java:3:3:INTERFACE:com.repomind.showcase.infrastructure.repository.InventoryRepository",
+            "source": "INDEXED_IMPLEMENTS_RELATION"
+          },
+          {
+            "type": "RETURN_VALUE",
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 10,
+            "symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:8:12:METHOD:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "code": "if (stock == null) return null;",
+            "evidence_type": "RETURN_VALUE",
+            "source_tool": "readFile",
+            "source_step": 4
+          },
+          {
+            "type": "ASSIGNMENT",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "symbol_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "Stock stock = repository.findAvailableStock(sku);",
+            "evidence_type": "ASSIGNMENT",
+            "source_tool": "readFile",
+            "source_step": 2
+          },
+          {
+            "type": "DEREFERENCE",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "if (stock.getAvailableQuantity() < quantity) throw new InventoryException(\"insufficient stock for \" + sku);",
+            "evidence_type": "DEREFERENCE",
+            "source_tool": "readFile",
+            "source_step": 2
+          }
+        ],
+        "implementation_candidate": {
+          "symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:8:12:METHOD:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+          "qualified_name": "com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+          "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+          "line": 8,
+          "end_line": 12,
+          "source": "UNIQUE_INDEXED_IMPLEMENTS_CANDIDATE"
+        },
+        "ambiguous_implementations": false,
+        "runtime_execution_proven": false,
+        "final_diagnosis_complete": true
+      },
+      "finalDiagnosis": {
+        "issue_type": "RUNTIME_ERROR",
+        "summary": "发现潜在空值解引用风险（静态证据）",
+        "location": {
+          "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+          "line": 9,
+          "symbol": "com.repomind.showcase.domain.inventory.StockAllocator.allocate"
+        },
+        "root_cause": "若已观察到的空值返回分支在运行时发生，随后对该值的解引用可能触发 NullPointerException；静态证据不能证明该分支实际执行。",
+        "evidence": [
+          {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "symbol": "com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "Stock stock = repository.findAvailableStock(sku);",
+            "reason": "readFile 返回的源码",
+            "kind": "FACT",
+            "source_tool": "readFile",
+            "source_step": 2,
+            "evidence_type": "ASSIGNMENT"
+          },
+          {
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 10,
+            "symbol": "com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "code": "if (stock == null) return null;",
+            "reason": "readFile 返回的源码",
+            "kind": "FACT",
+            "source_tool": "readFile",
+            "source_step": 4,
+            "evidence_type": "RETURN_VALUE"
+          },
+          {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol": "com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "if (stock.getAvailableQuantity() < quantity) throw new InventoryException(\"insufficient stock for \" + sku);",
+            "reason": "readFile 返回的源码",
+            "kind": "FACT",
+            "source_tool": "readFile",
+            "source_step": 2,
+            "evidence_type": "DEREFERENCE"
+          }
+        ],
+        "call_chain": [
+          "com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+          "com.repomind.showcase.infrastructure.repository.InventoryRepository.findAvailableStock"
+        ],
+        "fix_suggestion": "Add null checks before accessing methods on the Stock object to handle cases where the stock is not available.",
+        "uncertainty": "当前仅核验静态调用与两处源码；唯一接口实现是静态候选，未观察到运行时输入、实际分派或异常发生。",
+        "root_cause_kind": "INFERENCE"
+      },
+      "diagnosisIssues": [
+        "模型行号 src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:9 与 Observation 不符，已按源码修正为 8",
+        "STRUCTURAL_COMPATIBILITY: evidence[].evidence -> code, missing call_chain -> [], missing evidence[].reason -> pending verification, suggestion -> fix_suggestion；所有源码仍需 Observation 核验",
+        "CALL_CHAIN_PROJECTED_FROM_VERIFIED_STATIC_EDGE: not runtime execution",
+        "EVIDENCE_PROJECTED_FROM_TOOL: 3 verified facts",
+        "MODEL_LINE_MISMATCH: 模型行号已由 Observation 校正",
+        "RUNTIME_EXECUTION_NOT_OBSERVED: 模型的确定性运行时表述已降级为静态风险推断；原文保留在 rawModelOutput"
+      ],
+      "evidenceProjection": {
+        "modelClaim": {
+          "location": {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol": "allocate"
+          },
+          "call_chain": [],
+          "evidence": [
+            {
+              "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+              "line": 9,
+              "symbol": "allocate",
+              "code": "Stock stock = repository.findAvailableStock(sku);",
+              "reason": "模型提出的待核验片段",
+              "kind": "FACT",
+              "source_tool": null,
+              "source_step": null,
+              "evidence_type": null
+            },
+            {
+              "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+              "line": 10,
+              "symbol": "findAvailableStock",
+              "code": "if (stock == null) return null;",
+              "reason": "模型提出的待核验片段",
+              "kind": "FACT",
+              "source_tool": null,
+              "source_step": null,
+              "evidence_type": null
+            }
+          ]
+        },
+        "systemResult": {
+          "location": {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol": "com.repomind.showcase.domain.inventory.StockAllocator.allocate"
+          },
+          "call_chain": [
+            "com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "com.repomind.showcase.infrastructure.repository.InventoryRepository.findAvailableStock"
+          ],
+          "projected_fact_count": 3
+        },
+        "dataFlowChain": {
+          "return_source": {
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 10,
+            "symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:8:12:METHOD:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "code": "if (stock == null) return null;",
+            "evidence_type": "RETURN_VALUE",
+            "source_tool": "readFile",
+            "source_step": 4
+          },
+          "assignment": {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "symbol_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "Stock stock = repository.findAvailableStock(sku);",
+            "evidence_type": "ASSIGNMENT",
+            "source_tool": "readFile",
+            "source_step": 2
+          },
+          "exception_site": {
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 9,
+            "symbol_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "code": "if (stock.getAvailableQuantity() < quantity) throw new InventoryException(\"insufficient stock for \" + sku);",
+            "evidence_type": "DEREFERENCE",
+            "source_tool": "readFile",
+            "source_step": 2
+          },
+          "linkage": "UNIQUE_INTERFACE_IMPLEMENTATION_CANDIDATE",
+          "resolved_call_edge": {
+            "source_id": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java:7:11:METHOD:com.repomind.showcase.domain.inventory.StockAllocator.allocate",
+            "target_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InventoryRepository.java:3:3:METHOD:com.repomind.showcase.infrastructure.repository.InventoryRepository.findAvailableStock",
+            "file": "src/main/java/com/repomind/showcase/domain/inventory/StockAllocator.java",
+            "line": 8,
+            "code": "repository.findAvailableStock(sku)",
+            "source_tool": "indexed_call_graph",
+            "source_step": 0,
+            "resolution_method": "RECEIVER_TYPE_BINDING"
+          },
+          "candidate_method": "findAvailableStock",
+          "max_depth": 3,
+          "implementation_candidate": {
+            "symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:8:12:METHOD:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "qualified_name": "com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository.findAvailableStock",
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 8,
+            "end_line": 12,
+            "source": "UNIQUE_INDEXED_IMPLEMENTS_CANDIDATE"
+          },
+          "implementation_relation": {
+            "file": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java",
+            "line": 5,
+            "source_symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InMemoryInventoryRepository.java:5:13:CLASS:com.repomind.showcase.infrastructure.repository.InMemoryInventoryRepository",
+            "target_symbol_id": "src/main/java/com/repomind/showcase/infrastructure/repository/InventoryRepository.java:3:3:INTERFACE:com.repomind.showcase.infrastructure.repository.InventoryRepository",
+            "source": "INDEXED_IMPLEMENTS_RELATION"
+          }
+        },
+        "verifiedSymbolCount": 4,
+        "verifiedSourceLineCount": 37,
+        "verifiedCallEdgeCount": 1
+      }
+    }
+  ]
+}

@@ -12,6 +12,25 @@ from dataclasses import asdict, dataclass, field
 from app.agent.planner import ExecutionPlan
 from app.agent.diagnosis import validate_evidence_against_trace
 from app.agent.evidence import VerifiedEvidenceStore
+from app.domain.models import RelationType, SymbolType
+
+
+def _parameter_types(signature: str | None) -> tuple[str, ...] | None:
+    """Compare indexed Java method parameters without treating overload names as identities."""
+    if not signature or "(" not in signature or ")" not in signature:
+        return None
+    parameters = signature.split("(", 1)[1].rsplit(")", 1)[0].strip()
+    if not parameters:
+        return ()
+    if "<" in parameters or ">" in parameters:
+        return None  # No generic-signature guesses in the narrow dispatch bridge.
+    result = []
+    for parameter in parameters.split(","):
+        parts = parameter.strip().split()
+        if len(parts) != 2:
+            return None
+        result.append(parts[0])
+    return tuple(result)
 
 
 @dataclass(frozen=True)
@@ -138,6 +157,7 @@ def query_symbol_hints(question: str) -> list[str]:
 class AgentExecutionState:
     question: str
     plan: ExecutionPlan | None
+    analysis_index: object | None = field(default=None, repr=False)
     seen_tool_calls: set[str] = field(default_factory=set)
     discovered_symbols: dict[str, dict] = field(default_factory=dict)
     discovered_files: set[str] = field(default_factory=set)
@@ -285,17 +305,108 @@ class AgentExecutionState:
     def runtime_facts(self) -> dict[str, dict | None]:
         target_id = self._target_id()
         flow = self.evidence_store.trace_value_source(target_id, max_depth=3)
+        indexed_call = None
+        implementation = None
+        implementation_relation = None
+        ambiguous_implementations = False
+        interface_dispatch = False
+        index = self.analysis_index
+        assignment = flow["assignment"]
+        if index is not None and target_id and assignment and flow["candidate_method"]:
+            calls = [relation for relation in index.relations if
+                     relation.type == RelationType.CALLS and relation.resolved and
+                     relation.sourceSymbolId == target_id and relation.line == assignment.line and
+                     relation.targetName == flow["candidate_method"] and relation.targetSymbolId]
+            if len(calls) == 1:
+                indexed_call = calls[0]
+                interface_method = index.symbols.get(indexed_call.targetSymbolId)
+                interface_owner = index.symbols.get(interface_method.parentSymbolId) if interface_method else None
+                if interface_owner and interface_owner.type == SymbolType.INTERFACE:
+                    interface_dispatch = True
+                    implementations = [relation for relation in index.relations if
+                                       relation.type == RelationType.IMPLEMENTS and relation.resolved and
+                                       relation.targetSymbolId == interface_owner.id and relation.sourceSymbolId]
+                    if len(implementations) == 1:
+                        signature = _parameter_types(interface_method.signature)
+                        matches = [symbol for symbol in index.symbols.values() if
+                                   symbol.parentSymbolId == implementations[0].sourceSymbolId and
+                                   symbol.type == SymbolType.METHOD and symbol.name == interface_method.name and
+                                   signature is not None and _parameter_types(symbol.signature) == signature]
+                        if len(matches) == 1:
+                            implementation = matches[0]
+                            implementation_relation = implementations[0]
+                            if implementation.id in self.evidence_store.symbols:
+                                flow = self.evidence_store.trace_value_source(
+                                    target_id, max_depth=3, preferred_callee_id=implementation.id)
+                    else:
+                        ambiguous_implementations = len(implementations) > 1
         callee = flow["callee_symbol"]
         related_edge = self.call_tracker.edges.get((target_id, callee.symbol_id)) if callee else None
         def fact(value):
             return asdict(value) if value is not None else None
+        indexed_edge = ({"source_id": indexed_call.sourceSymbolId, "target_id": indexed_call.targetSymbolId,
+                         "file": indexed_call.filePath, "line": indexed_call.line, "code": indexed_call.evidence,
+                         "source_tool": "indexed_call_graph", "source_step": 0,
+                         "resolution_method": indexed_call.resolutionMethod} if indexed_call else None)
+        implementation_hint = ({"symbol_id": implementation.id, "qualified_name": implementation.qualifiedName,
+                                "file": implementation.filePath, "line": implementation.startLine,
+                                "end_line": implementation.endLine,
+                                "source": "UNIQUE_INDEXED_IMPLEMENTS_CANDIDATE"} if implementation else None)
+        observed_implementation = bool(implementation and implementation.id in self.evidence_store.symbols)
+        cross_file_required = bool(indexed_call and interface_dispatch)
+        linkage = flow["linkage"]
+        if cross_file_required and observed_implementation and flow["return_source"]:
+            linkage = "UNIQUE_INTERFACE_IMPLEMENTATION_CANDIDATE"
         return {"assignment": fact(flow["assignment"]),
                 "invalid_value_origin": fact(flow["return_source"]),
                 "trigger_operation": fact(flow["trigger"]),
-                "related_call_edge": asdict(related_edge) if related_edge else None,
-                "source_to_usage_linkage": flow["linkage"],
+                "related_call_edge": asdict(related_edge) if related_edge else indexed_edge,
+                "source_to_usage_linkage": linkage,
                 "candidate_method": flow["candidate_method"],
-                "callee_symbol": fact(callee)}
+                "callee_symbol": fact(callee),
+                "implementation_candidate": implementation_hint,
+                "implementation_relation": ({"file": implementation_relation.filePath,
+                                             "line": implementation_relation.line,
+                                             "source_symbol_id": implementation_relation.sourceSymbolId,
+                                             "target_symbol_id": implementation_relation.targetSymbolId,
+                                             "source": "INDEXED_IMPLEMENTS_RELATION"}
+                                            if implementation_relation else None),
+                "ambiguous_implementations": ambiguous_implementations,
+                "cross_file_required": cross_file_required,
+                "implementation_observed": observed_implementation}
+
+    def cross_file_evidence(self) -> dict:
+        """Verified static-risk chain; unique implementation is not a runtime dispatch proof."""
+        facts = self.runtime_facts()
+        if not facts["cross_file_required"]:
+            return {"applicable": False, "complete": False, "missing": [], "chain": [],
+                    "implementation_candidate": facts["implementation_candidate"],
+                    "ambiguous_implementations": facts["ambiguous_implementations"]}
+        assignment, origin, trigger = (facts[key] for key in
+                                       ("assignment", "invalid_value_origin", "trigger_operation"))
+        files = {item["file"] for item in (assignment, origin, trigger) if item}
+        checks = {"producing_method_observed": facts["implementation_observed"],
+                  "invalid_return_observed": bool(origin and origin["evidence_type"] == "RETURN_VALUE"),
+                  "resolved_interface_call": facts["related_call_edge"] is not None,
+                  "unique_implementation_relation": facts["implementation_relation"] is not None,
+                  "assignment_observed": assignment is not None,
+                  "dereference_observed": trigger is not None,
+                  "two_source_files": len(files) >= 2}
+        chain = []
+        edge = facts["related_call_edge"]
+        if edge:
+            chain.append({"type": "CALL_EDGE", **edge})
+        relation = facts["implementation_relation"]
+        if relation:
+            chain.append({"type": "IMPLEMENTS", **relation})
+        for label, value in (("RETURN_VALUE", origin), ("ASSIGNMENT", assignment), ("DEREFERENCE", trigger)):
+            if value:
+                chain.append({"type": label, **value})
+        return {"applicable": True, "complete": all(checks.values()),
+                "missing": [key for key, present in checks.items() if not present],
+                "chain": chain, "implementation_candidate": facts["implementation_candidate"],
+                "ambiguous_implementations": facts["ambiguous_implementations"],
+                "runtime_execution_proven": False}
 
     def checklist(self) -> dict[str, bool]:
         task = self.plan.task_type if self.plan else None
@@ -303,12 +414,16 @@ class AgentExecutionState:
         target_lines = self._target_lines(target_id)
         if task == "RUNTIME_ERROR":
             facts = self.runtime_facts()
-            return {"target_symbol": target_id is not None, "target_source": bool(target_lines),
+            checks = {"target_symbol": target_id is not None, "target_source": bool(target_lines),
                     "assignment": facts["assignment"] is not None,
                     "invalid_value_origin": facts["invalid_value_origin"] is not None,
                     "trigger_operation": facts["trigger_operation"] is not None,
                     "source_to_usage_linkage": facts["source_to_usage_linkage"] is not None,
                     "related_call_edge": facts["related_call_edge"] is not None}
+            if facts["cross_file_required"]:
+                chain = self.cross_file_evidence()
+                checks["cross_file_source"] = chain["complete"]
+            return checks
         if task == "BUSINESS_LOGIC_ERROR":
             callers = [edge for edge in self.call_tracker.edges.values() if edge.target_id == target_id]
             callees = [edge for edge in self.call_tracker.edges.values() if edge.source_id == target_id]
@@ -337,7 +452,8 @@ class AgentExecutionState:
     def missing_evidence(self) -> list[str]:
         checks = self.checklist()
         if self.plan and self.plan.task_type == "RUNTIME_ERROR":
-            checks = {key: value for key, value in checks.items() if key != "related_call_edge"}
+            if not self.runtime_facts()["cross_file_required"]:
+                checks = {key: value for key, value in checks.items() if key != "related_call_edge"}
         return [key for key, present in checks.items() if not present]
 
     def completion_decision(self) -> str:
@@ -423,7 +539,21 @@ class AgentExecutionState:
             flow = self.runtime_facts()
             callee = flow["callee_symbol"]
             method = flow["candidate_method"]
-            if method and callee and not flow["invalid_value_origin"]:
+            candidate = flow["implementation_candidate"]
+            if candidate and not flow["implementation_observed"]:
+                priority = ("Priority cross-file evidence gap: the indexed CALLS edge targets an interface method; "
+                            "a single signature-matching IMPLEMENTS candidate exists (not runtime dispatch proof): "
+                            f"{candidate['qualified_name']} in {candidate['file']} lines "
+                            f"{candidate['line']}-{candidate['end_line']}. "
+                            f"Use searchSymbol(name={method!r}) to observe its Symbol, then readFile for its source. ")
+            elif candidate and not flow["invalid_value_origin"]:
+                priority = (f"Priority cross-file evidence gap: observed candidate {candidate['qualified_name']} "
+                            f"still lacks an invalid return source. A fresh readFile on {candidate['file']} "
+                            f"lines {candidate['line']}-{candidate['end_line']} can verify it. ")
+            elif flow["ambiguous_implementations"]:
+                priority = ("Interface dispatch has multiple indexed implementations. Do not choose one "
+                            "without further binding evidence. ")
+            elif method and callee and not flow["invalid_value_origin"]:
                 priority = (f"Priority value-source gap: observed assignment calls {method}; "
                             f"its observed Symbol is {callee['raw_name']} in {callee['file']} "
                             f"lines {callee['line']}-{callee['end_line']}. A fresh readFile on that file "
@@ -443,6 +573,11 @@ class AgentExecutionState:
         if self.plan and self.plan.task_type == "RUNTIME_ERROR" and "trigger_operation" in gaps and self._target_id():
             target = self.discovered_symbols[self._target_id()]
             hints.append(f"The exception-triggering operation is not observed yet; inspect the full target method source in {target['filePath']} lines {target['startLine']}-{target['endLine']}.")
+        if self.plan and self.plan.task_type == "RUNTIME_ERROR" and "cross_file_source" in gaps:
+            chain = self.cross_file_evidence()
+            hints.append("Cross-file runtime evidence is incomplete: " + ", ".join(chain["missing"]) +
+                         ". An indexed interface implementation is only a static candidate, not runtime dispatch proof. "
+                         "Do not claim a complete cross-file diagnosis until source lines from both files are observed.")
         if self.consecutive_no_progress >= 2:
             hints.append("NO_PROGRESS: your last Tool choice did not add evidence. Switch Tool or broaden the "
                          "query. An identical Tool+arguments request will be blocked again; do not repeat it.")
@@ -489,7 +624,8 @@ class AgentExecutionState:
                 "verified_evidence_counts": {"symbols": len(self.evidence_store.symbols),
                                              "source_lines": len(self.evidence_store.source_lines),
                                              "resolved_call_edges": len(self.evidence_store.edges)},
-                "data_flow_chain": self.runtime_facts() if self.plan and self.plan.task_type == "RUNTIME_ERROR" else None}
+                "data_flow_chain": self.runtime_facts() if self.plan and self.plan.task_type == "RUNTIME_ERROR" else None,
+                "cross_file_evidence": self.cross_file_evidence() if self.plan and self.plan.task_type == "RUNTIME_ERROR" else None}
 
 
 def has_configuration_capability(tool_names: set[str]) -> bool:

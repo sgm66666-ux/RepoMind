@@ -38,23 +38,46 @@ flowchart TD
 
 ## 功能展示
 
+### 企业订单 Showcase
+
+独立的 [Java 订单处理仓库](demo/enterprise-order-showcase/)串联客户、定价、库存、支付、配送、通知与审计，用于观察 RepoMind 在较大仓库中的真实表现。[演示记录与限制](docs/showcase/enterprise-order-showcase.md)列出实际分析结果。概览中的服务状态仅是拍摄时的探测结果。
+
+<a href="docs/screenshots/showcase-overview.png"><img src="docs/screenshots/showcase-overview.png" alt="企业订单 Showcase 概览：真实索引统计与服务状态" width="1100"></a>
+
+下图是订单主干与定价、库存、支付分支的**聚焦视图**：仅从真实 Call Graph API 返回值中筛选 6 个 Symbol 和 5 条已解析边，再由原有 Cytoscape 组件渲染。它不是全仓图，也不是前端现有的筛选功能。[查看完整图](docs/screenshots/showcase-call-graph-full.png)。
+
+<a href="docs/screenshots/showcase-call-graph-focus.png"><img src="docs/screenshots/showcase-call-graph-focus.png" alt="企业订单主干与三个分支的真实已解析调用关系局部图" width="1100"></a>
+
+[查看 Showcase 跨文件库存诊断截图](docs/screenshots/showcase-cross-file-diagnosis.png)：FinalDiagnosis 中的赋值、空值返回和解引用分别来自两份源码的真实 `readFile` Observation；接口实现只是静态候选，不证明运行时实际分派。技术记录与边界见[演示文档](docs/showcase/enterprise-order-showcase.md)。
+
 ### 故障定位 · Inventory NPE
 
 对 `InventoryService.checkStock` 的异常提问后，界面展示相关 Symbol、源码位置和工具执行记录；根因说明与可核验代码证据分开展示。
-
-![Inventory NPE 故障定位界面](docs/screenshots/inventory-npe-final-diagnosis.png)
 
 ### 调用链分析 · 用户注册
 
 CallPathFinder 沿已解析的静态调用边查询 `UserService.register` 到 `ConfigRepository.getTemplate` 的路径，并展示调用关系来源。
 
-![用户注册调用链分析界面](docs/screenshots/register-call-chain.png)
-
 ### 证据不足处理 · 订单价格
 
 当源码中能找到计算实现、却没有预期计价规则时，诊断保留不确定性，不把猜测写成业务结论。
 
-![订单价格证据不足诊断界面](docs/screenshots/price-evidence-insufficient.png)
+三种诊断结果对照（点击缩略图查看完整界面）：
+
+| Inventory NPE | 用户注册调用链 | 订单价格 · 证据不足 |
+| --- | --- | --- |
+| <a href="docs/screenshots/inventory-npe-final-diagnosis.png"><img src="docs/screenshots/inventory-npe-final-diagnosis.png" alt="Inventory NPE：源码证据与原因分析分离" width="340"></a> | <a href="docs/screenshots/register-call-chain.png"><img src="docs/screenshots/register-call-chain.png" alt="用户注册：静态调用链及来源" width="340"></a> | <a href="docs/screenshots/price-evidence-insufficient.png"><img src="docs/screenshots/price-evidence-insufficient.png" alt="订单价格：缺少预期业务规则时保留不确定性" width="340"></a> |
+
+### Agent 执行过程
+
+下图来自 Inventory NPE 问题的一次真实本地 Ollama 执行，包含规则生成的 Plan、Provider、Tool Calling 与 Observation。当前 Provider 使用 `json-tool-compat` 兼容方式；Plan 是分析方向，最终结论仍以工具返回的证据为准。
+
+<details>
+<summary>展开 Agent Trace 截图（Plan · Tool Calling · Observation）</summary>
+
+<a href="docs/screenshots/public-agent-trace.png"><img src="docs/screenshots/public-agent-trace.png" alt="真实本地 Ollama 执行：分析计划、工具调用和 Observation" width="720"></a>
+
+</details>
 
 ## 技术栈
 
@@ -83,6 +106,8 @@ Pop-Location
 
 访问 [http://127.0.0.1:5173](http://127.0.0.1:5173)。启动脚本检查 Ollama，并启动或核验 FastAPI、Spring Boot 和前端；随后分析选定的 Demo 仓库。切换演示时运行 `.\scripts\prepare-demo.ps1 -Demo register` 或 `.\scripts\prepare-demo.ps1 -Demo price`；每次切换都会替换当前内存索引。
 
+分析独立的企业订单 Showcase 时，在仓库根目录运行 `.\scripts\prepare-showcase.ps1`；它同样会替换当前内存索引，不影响冻结的 Demo 文件。
+
 ## 项目结构
 
 ```text
@@ -101,4 +126,4 @@ docs/               发布、评测与项目说明
 - Python 动态分派采取保守解析。
 - 尚未覆盖配置文件的语义关联。
 
-详细的演示与验证记录见[发布文档](docs/release/)、[评测记录](docs/evaluation/)和[项目介绍](docs/interview/)。
+更多说明见[企业订单演示记录](docs/showcase/enterprise-order-showcase.md)、[发布文档](docs/release/)、[评测记录](docs/evaluation/)和[项目介绍](docs/interview/)。
