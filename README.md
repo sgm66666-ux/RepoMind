@@ -1,42 +1,106 @@
 # RepoMind
 
-RepoMind 是面向 Java 和 Python 仓库的本地 LLM 代码理解与故障诊断系统。它通过静态分析建立代码结构与调用关系，再由 Agent 按问题调用代码工具，将可核验的源码事实与模型推断分开呈现。
+**代码仓库分析与故障定位平台**
 
-## 核心能力
+## 项目简介
 
-- **代码结构解析**：基于 tree-sitter 解析 Java/Python AST，建立 Symbol Index，抽取 CALLS、IMPORTS、EXTENDS、IMPLEMENTS、REFERENCES 等关系。
-- **调用关系分析**：构建 Call Graph；CallPathFinder 在已解析调用边上进行确定性路径查询，辅助追踪跨方法调用。
-- **Agent 代码分析**：TaskPlanner 制定分析计划，Agent Loop 通过 Tool Calling 完成 Symbol 检索、Caller/Callee 查询和源码读取，并记录每步 Observation。
-- **证据化诊断**：Verified Evidence Store 管理工具与调用图证据；FinalDiagnosis 的 Projection / Validation 将可核验事实与 LLM 推断分离。
-- **可视化分析**：Vue 3 控制台展示仓库、Symbol、Call Graph、分析计划、Tool Trace、代码证据与诊断结果。
+RepoMind 是面向 Java/Python 代码仓库的代码分析与故障定位平台，通过 AST、Symbol、Call Graph 和源码上下文建立结构化代码索引，并结合本地 LLM 与 Tool Calling 辅助多步代码检索与问题定位。
 
-## 架构
+平台以静态分析和源码证据为基础：Python/FastAPI 提供代码分析与检索服务，Java/Spring Boot 提供前端 API 网关，Vue 控制台展示代码关系与诊断过程。模型辅助选择工具和组织诊断，最终展示区分可核验的源码事实与模型推断。
 
-```mermaid
+## 系统架构
+
+~~~mermaid
 flowchart TD
-    Q["用户问题"] --> P["TaskPlanner"]
-    P --> L["Agent Loop"]
-    L --> T["Tool Registry / Tool Executor"]
-    T --> C["Code Intelligence Layer"]
-    C --> A["AST / Symbol Index"]
-    C --> G["Call Graph / CallPathFinder"]
-    C --> X["CodeContextBuilder"]
-    T --> O["Observation"]
-    G --> E["Verified Call-Graph Evidence"]
-    O --> V["Verified Evidence Store"]
-    E --> V
-    V --> F["FinalDiagnosis"]
-    F --> J["Projection / Validation"]
-    J --> U["Diagnosis UI"]
+    R["Java / Python 代码仓库"] --> A["tree-sitter AST"]
+    A --> S["Symbol Index / 代码关系"]
+    S --> G["Call Graph / CallPathFinder"]
+    S --> C["CodeContextBuilder / 源码上下文"]
+    S --> T["代码检索工具"]
+    G --> T
+    C --> K["结构化代码上下文"]
+    U["Vue 分析控制台"] --> J["Spring Boot API 网关"]
+    J --> F["FastAPI 代码分析服务"]
+    F --> S
+    F --> L["Agent Loop / 本地 LLM"]
+    L --> T
+    T --> O["Observation / Verified Evidence"]
+    O --> D["FinalDiagnosis / Projection / Validation"]
+    D --> U
+~~~
+
+静态分析、调用路径查询和源码读取由代码分析层完成，不依赖模型生成代码关系。Agent 在已有索引和工具之上辅助检索与诊断。
+
+## 静态分析能力
+
+- 使用 tree-sitter 解析 Java/Python AST，提取代码中的结构化 Symbol。
+- 建立 Symbol Index，关联符号名称、类型、源码文件与行范围。
+- 抽取 CALLS、IMPORTS、EXTENDS、IMPLEMENTS、REFERENCES 等关系，并保留关系来源与解析状态。
+
+## Symbol 与 Call Graph
+
+Symbol Index 支持定位目标类、方法或函数；Call Graph 提供 caller/callee 查询。CallPathFinder 仅沿已解析的 CALLS 边执行有界、确定性的路径查询，用于追踪静态跨方法调用关系。
+
+调用边来自源码分析，是代码关系证据，不代表对应路径在运行时一定执行。
+
+## 代码上下文与检索工具
+
+CodeContextBuilder 按范围和数量限制组合目标 Symbol、源码片段、父级、imports、callers、callees 与 references，并保留源码位置及关系证据。
+
+| 工具 | 用途 |
+| --- | --- |
+| searchSymbol | 按名称、限定名、类型和语言检索结构化 Symbol |
+| readFile | 读取已分析仓库内指定行范围的源码 |
+| findReferences | 查找指向目标 Symbol 的已解析引用 |
+| findCallers | 查询目标 Symbol 的调用方 |
+| findCallees | 查询目标 Symbol 调用的其他符号 |
+
+## 故障定位流程
+
+1. 分析仓库，建立 AST、Symbol 和代码关系索引。
+2. 根据异常或业务描述检索目标 Symbol，查看源码及上下游调用关系。
+3. 汇集工具 Observation 与可核验的调用图证据。
+4. 生成诊断并通过 Projection / Validation 展示源码事实、模型推断和证据边界。
+
+分析控制台可查看 Symbol、Call Graph、工具执行记录和源码位置，支持从诊断结论回到相关代码。
+
+## Agent / Tool Calling
+
+TaskPlanner 为问题制定分析计划，Agent Loop 通过 Tool Registry / Tool Executor 调用代码检索工具，根据上一轮 Observation 继续检索或生成诊断。Verified Evidence Store 管理工具和调用图证据，FinalDiagnosis 的 Projection / Validation 将可核验事实与 LLM 推断分开展示。
+
+本地 LLM 通过 Ollama 接入，当前演示配置使用 qwen2.5-coder:14b。模型承担推理与工具选择，AST、Symbol 和 Call Graph 仍由静态分析层构建。
+
+## 技术栈
+
+| 类别 | 技术 |
+| --- | --- |
+| API 网关 | Java、Spring Boot |
+| 代码分析服务 | Python、FastAPI、tree-sitter |
+| 结构与关系 | AST、Symbol Index、Call Graph、CodeContextBuilder |
+| 辅助诊断 | Tool Calling、Agent Loop、Ollama |
+| 前端 | Vue 3、TypeScript、Vite、Element Plus、Cytoscape.js |
+| 工程 | REST API、PowerShell、Git |
+
+## 本地运行
+
+以下命令适用于 Windows PowerShell。准备 Python、Java、Maven、Node.js/npm 和已启动的 Ollama；本地模型为 `qwen2.5-coder:14b`。在仓库根目录执行：
+
+```powershell
+ollama pull qwen2.5-coder:14b
+python -m venv services/python-service/.venv
+& .\services\python-service\.venv\Scripts\python.exe -m pip install -r services/python-service/requirements.txt
+Push-Location services/frontend
+npm ci
+Pop-Location
+.\scripts\start-demo.ps1 -Demo inventory
+.\scripts\check-readiness.ps1 -Demo inventory -RequireAnalysis -Strict
 ```
 
-前端经 Spring Boot 网关访问 FastAPI。Ollama 接入本地 `qwen2.5-coder:14b`，负责 Agent 的推理与工具选择；AST、Call Graph 和源码读取仍由代码分析层完成。
+访问 [http://127.0.0.1:5173](http://127.0.0.1:5173)。启动脚本检查 Ollama，并启动或核验 FastAPI、Spring Boot 和前端；随后分析选定的 Demo 仓库。切换演示时运行 `.\scripts\prepare-demo.ps1 -Demo register` 或 `.\scripts\prepare-demo.ps1 -Demo price`；每次切换都会替换当前内存索引。
 
-## 工作流程
+分析独立的企业订单 Showcase 时，在仓库根目录运行 `.\scripts\prepare-showcase.ps1`；它同样会替换当前内存索引，不影响冻结的 Demo 文件。
 
-用户问题 → TaskPlanner → Agent Loop / Tool Calling → Observation → Verified Evidence → FinalDiagnosis。Agent 可根据上一轮 Observation 继续调用工具或生成诊断；最终展示区分源码事实与模型推断。
-
-## 功能展示
+## 项目界面
 
 ### 企业订单 Showcase
 
@@ -79,35 +143,6 @@ CallPathFinder 沿已解析的静态调用边查询 `UserService.register` 到 `
 
 </details>
 
-## 技术栈
-
-| 模块 | 技术 |
-| --- | --- |
-| Code Intelligence | Python、tree-sitter、AST、Symbol Index、Call Graph |
-| Agent / LLM | FastAPI、Ollama、`qwen2.5-coder:14b`、Tool Calling |
-| Backend Gateway | Java、Spring Boot |
-| Frontend | Vue 3、TypeScript、Vite、Element Plus、Cytoscape.js |
-| Engineering | REST API、PowerShell 脚本、Git |
-
-## 快速开始
-
-以下命令适用于 Windows PowerShell。准备 Python、Java、Maven、Node.js/npm 和已启动的 Ollama；本地模型为 `qwen2.5-coder:14b`。在仓库根目录执行：
-
-```powershell
-ollama pull qwen2.5-coder:14b
-python -m venv services/python-service/.venv
-& .\services\python-service\.venv\Scripts\python.exe -m pip install -r services/python-service/requirements.txt
-Push-Location services/frontend
-npm ci
-Pop-Location
-.\scripts\start-demo.ps1 -Demo inventory
-.\scripts\check-readiness.ps1 -Demo inventory -RequireAnalysis -Strict
-```
-
-访问 [http://127.0.0.1:5173](http://127.0.0.1:5173)。启动脚本检查 Ollama，并启动或核验 FastAPI、Spring Boot 和前端；随后分析选定的 Demo 仓库。切换演示时运行 `.\scripts\prepare-demo.ps1 -Demo register` 或 `.\scripts\prepare-demo.ps1 -Demo price`；每次切换都会替换当前内存索引。
-
-分析独立的企业订单 Showcase 时，在仓库根目录运行 `.\scripts\prepare-showcase.ps1`；它同样会替换当前内存索引，不影响冻结的 Demo 文件。
-
 ## 项目结构
 
 ```text
@@ -120,10 +155,10 @@ demo/               示例仓库
 docs/               发布、评测与项目说明
 ```
 
-## 当前边界
+## 已知边界
 
 - Call Graph 基于静态分析，不代表实际运行时调用路径。
 - 对动态分派与多实现调用采用保守解析，存在歧义时保持 unresolved。
 - 暂未覆盖配置文件的语义关联。
 
-更多说明见[企业订单演示记录](docs/showcase/enterprise-order-showcase.md)、[发布文档](docs/release/)、[评测记录](docs/evaluation/)和[项目介绍](docs/interview/)。
+更多说明见[企业订单演示记录](docs/showcase/enterprise-order-showcase.md)、[运行与演示文档](docs/release/)、[评测记录](docs/evaluation/)和[项目说明](docs/interview/)。
