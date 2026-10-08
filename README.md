@@ -68,6 +68,8 @@ CodeContextBuilder 按范围和数量限制组合目标 Symbol、源码片段、
 
 TaskPlanner 为问题制定分析计划，Agent Loop 通过 Tool Registry / Tool Executor 调用代码检索工具，根据上一轮 Observation 继续检索或生成诊断。Verified Evidence Store 管理工具和调用图证据，FinalDiagnosis 的 Projection / Validation 将可核验事实与 LLM 推断分开展示。
 
+`diagnosisStatus=VALID` 表示诊断通过当前结构、源码证据与调用关系校验；`root_cause_kind=INFERENCE` 标明根因属于模型推断。运行时原因与业务规则的确认还需结合实际输入、日志或需求测试。
+
 本地 LLM 通过 Ollama 接入，当前演示配置使用 qwen2.5-coder:14b。模型承担推理与工具选择，AST、Symbol 和 Call Graph 仍由静态分析层构建。
 
 ## 技术栈
