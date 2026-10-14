@@ -163,4 +163,4 @@ docs/               发布、评测与项目说明
 - 对动态分派与多实现调用采用保守解析，存在歧义时保持 unresolved。
 - 暂未覆盖配置文件的语义关联。
 
-更多说明见[企业订单演示记录](docs/showcase/enterprise-order-showcase.md)、[运行与演示文档](docs/release/)、[评测记录](docs/evaluation/)和[项目说明](docs/interview/)。
+更多说明见[企业订单演示记录](docs/showcase/enterprise-order-showcase.md)、[运行与演示文档](docs/release/)和[评测记录](docs/evaluation/)。
