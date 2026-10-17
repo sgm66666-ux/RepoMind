@@ -5,7 +5,7 @@ export function errorMessage(error: unknown): string {
     if (error.status === 503 && error.message.toLowerCase().includes('provider')) {
       return 'LLM Provider 未配置或配置不完整。'
     }
-    if (error.code === 'GATEWAY_UNAVAILABLE') return 'Spring Boot Gateway 无法连接。'
+    if (error.code === 'API_UNAVAILABLE') return 'FastAPI 服务无法连接。'
     if (error.message === 'Python service is unavailable') return 'Python Service 无法连接。'
     return `请求失败：${error.message}`
   }

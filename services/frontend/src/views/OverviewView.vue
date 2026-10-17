@@ -13,7 +13,7 @@ import { errorMessage } from '../utils/errors'
 const repository = useRepositoryStore()
 const services = useServicesStore()
 const router = useRouter()
-const gatewayStatus = computed(() => services.gateway === 'online' ? '正常' : services.gateway === 'offline' ? '离线' : '检测中')
+const apiStatus = computed(() => services.api === 'online' ? '正常' : services.api === 'offline' ? '离线' : '检测中')
 const analysisStatus = computed(() => services.analysis === 'online' ? '正常' : services.analysis === 'offline' ? '离线' : '检测中')
 const llmStatus = computed(() => services.llm === 'success' ? '本次调用成功' : services.llm === 'unconfigured' ? '未配置' : services.llm === 'failed' ? '调用失败' : '未验证')
 
@@ -41,8 +41,8 @@ function openSymbol(symbol: CodeSymbol) {
     <section>
       <div class="section-title-row"><div><span class="eyebrow">服务状态</span><h2>运行环境</h2></div><el-button text @click="services.refresh()">刷新状态</el-button></div>
       <div class="service-grid">
-        <article class="service-card"><div><span class="service-icon">GW</span><strong>Spring Boot Gateway</strong></div><span class="status-pill" :class="services.gateway">{{ gatewayStatus }}</span><small>来自 /api/health 的实时响应</small></article>
-        <article class="service-card"><div><span class="service-icon">PY</span><strong>Python Service</strong></div><span class="status-pill" :class="services.analysis">{{ analysisStatus }}</span><small>通过 Gateway 的 /api/symbols 探测</small></article>
+        <article class="service-card"><div><span class="service-icon">API</span><strong>FastAPI 服务</strong></div><span class="status-pill" :class="services.api">{{ apiStatus }}</span><small>来自 /api/health 的实时响应</small></article>
+        <article class="service-card"><div><span class="service-icon">PY</span><strong>代码分析接口</strong></div><span class="status-pill" :class="services.analysis">{{ analysisStatus }}</span><small>通过 /api/symbols 探测分析接口</small></article>
         <article class="service-card"><div><span class="service-icon">LLM</span><strong>Ollama / LLM</strong></div><span class="status-pill" :class="services.llm">{{ llmStatus }}</span><small>{{ services.provider || '现有 API 无独立 LLM 健康状态；需真实调用验证' }}</small></article>
       </div>
     </section>

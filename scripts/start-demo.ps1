@@ -3,14 +3,15 @@ param(
     [switch]$SkipAnalysis,
     [string]$PythonExe,
     [string]$PythonSitePackages,
-    [string]$MavenExe,
-    [string]$JavaHome,
     [string]$NpmExe,
+    [ValidateRange(1, 65535)][int]$PythonPort = 8000,
+    [ValidateRange(1, 65535)][int]$FrontendPort = 5173,
     [string]$OllamaUrl = 'http://127.0.0.1:11434'
 )
 
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+if ($PythonPort -eq $FrontendPort) { throw 'FastAPI and frontend must use different ports.' }
 
 function Probe([string]$url) {
     try { return Invoke-RestMethod -Uri $url -TimeoutSec 2 }
@@ -69,16 +70,6 @@ if ($PythonSitePackages) {
 & $PythonExe -c 'import fastapi, uvicorn, tree_sitter' 2>$null
 if ($LASTEXITCODE -ne 0) { throw "Python dependencies missing or interpreter broken: $PythonExe. Recreate the venv and install requirements.txt." }
 
-if ($JavaHome) {
-    if (-not (Test-Path (Join-Path $JavaHome 'bin/java.exe'))) { throw "Invalid JavaHome: $JavaHome" }
-    $env:JAVA_HOME = $JavaHome
-    $env:PATH = (Join-Path $JavaHome 'bin') + [IO.Path]::PathSeparator + $env:PATH
-}
-if (-not $MavenExe) {
-    $command = Get-Command mvn.cmd -ErrorAction SilentlyContinue
-    if ($command) { $MavenExe = $command.Source }
-}
-if (-not $MavenExe -or -not (Test-Path $MavenExe)) { throw 'Maven not found. Install Maven or pass -MavenExe.' }
 if (-not $NpmExe) {
     $command = Get-Command npm.cmd -ErrorAction SilentlyContinue
     if ($command) { $NpmExe = $command.Source }
@@ -92,17 +83,16 @@ $env:REPOMIND_LLM_PROVIDER = 'ollama'
 $env:OLLAMA_BASE_URL = $OllamaUrl
 $env:OLLAMA_MODEL = 'qwen2.5-coder:14b'
 $env:OLLAMA_REQUEST_TIMEOUT_SECONDS = '180'
-$env:REPOMIND_PYTHON_SERVICE_URL = 'http://127.0.0.1:8000'
+$env:REPOMIND_PYTHON_SERVICE_URL = "http://127.0.0.1:$PythonPort"
 
-StartOrVerify 'Python API' 8000 'http://127.0.0.1:8000/health' $PythonExe @('-m','uvicorn','app.main:app','--host','127.0.0.1','--port','8000') (Join-Path $root 'services/python-service') 45
-StartOrVerify 'Spring Boot gateway' 8080 'http://127.0.0.1:8080/api/health' $MavenExe @('spring-boot:run','-q') (Join-Path $root 'services/java-service') 120
-StartOrVerify 'Vue frontend' 5173 'http://127.0.0.1:5173' $NpmExe @('run','dev','--','--host','127.0.0.1') (Join-Path $root 'services/frontend') 45
+StartOrVerify 'FastAPI' $PythonPort "http://127.0.0.1:$PythonPort/api/health" $PythonExe @('-m','uvicorn','app.main:app','--host','127.0.0.1','--port',"$PythonPort") (Join-Path $root 'services/python-service') 45
+StartOrVerify 'Vue frontend' $FrontendPort "http://127.0.0.1:$FrontendPort" $NpmExe @('run','dev','--','--host','127.0.0.1','--port',"$FrontendPort",'--strictPort') (Join-Path $root 'services/frontend') 45
 
 if (-not $SkipAnalysis) {
-    & (Join-Path $PSScriptRoot 'prepare-demo.ps1') -Demo $Demo -PythonUrl 'http://127.0.0.1:8000' | Out-Null
+    & (Join-Path $PSScriptRoot 'prepare-demo.ps1') -Demo $Demo -PythonUrl "http://127.0.0.1:$PythonPort" | Out-Null
 }
-& (Join-Path $PSScriptRoot 'check-readiness.ps1') -OllamaUrl $OllamaUrl -Demo $Demo -RequireAnalysis:(-not $SkipAnalysis) -Strict
-Write-Host 'Frontend: http://127.0.0.1:5173'
-Write-Host 'Gateway:  http://127.0.0.1:8080/api/health'
-Write-Host 'Python:   http://127.0.0.1:8000/health'
-Write-Host 'API docs: http://127.0.0.1:8000/docs'
+& (Join-Path $PSScriptRoot 'check-readiness.ps1') -OllamaUrl $OllamaUrl -PythonUrl "http://127.0.0.1:$PythonPort" -FrontendUrl "http://127.0.0.1:$FrontendPort" -Demo $Demo -RequireAnalysis:(-not $SkipAnalysis) -Strict
+Write-Host "Frontend: http://127.0.0.1:$FrontendPort"
+Write-Host "API:      http://127.0.0.1:$FrontendPort/api/health"
+Write-Host "Python:   http://127.0.0.1:$PythonPort/health"
+Write-Host "API docs: http://127.0.0.1:$PythonPort/docs"

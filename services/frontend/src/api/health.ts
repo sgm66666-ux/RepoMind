@@ -1,12 +1,12 @@
 import { apiClient } from './client'
 
 export const healthApi = {
-  async gateway(): Promise<boolean> {
+  async api(): Promise<boolean> {
     const { data } = await apiClient.get<{ status: string; service: string }>('/api/health')
-    return data.status === 'ok' && data.service === 'java-service'
+    return data.status === 'ok' && data.service === 'python-service'
   },
   async analysisService(): Promise<boolean> {
-    // Existing gateway route forwards this read-only probe to FastAPI.
+    // Probe the analysis handler separately from process liveness.
     const { data } = await apiClient.get<unknown>('/api/symbols')
     return Array.isArray(data)
   },

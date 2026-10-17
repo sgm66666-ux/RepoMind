@@ -9,12 +9,12 @@ const mock = new MockAdapter(apiClient)
 beforeEach(() => { mock.reset(); setActivePinia(createPinia()) })
 
 describe('真实服务状态', () => {
-  it('checks gateway and forwarded Python route independently', async () => {
-    mock.onGet('/api/health').reply(200, { status: 'ok', service: 'java-service' })
+  it('checks FastAPI liveness and the analysis handler independently', async () => {
+    mock.onGet('/api/health').reply(200, { status: 'ok', service: 'python-service' })
     mock.onGet('/api/symbols').reply(503, { message: 'Python service is unavailable' })
     const store = useServicesStore()
     await store.refresh()
-    expect(store.gateway).toBe('online')
+    expect(store.api).toBe('online')
     expect(store.analysis).toBe('offline')
     expect(store.llm).toBe('unverified')
   })

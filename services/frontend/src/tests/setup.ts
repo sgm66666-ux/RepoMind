@@ -3,10 +3,12 @@ import ElementPlus from 'element-plus'
 
 config.global.plugins = [ElementPlus]
 
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: () => ({ matches: false, addListener: () => undefined, removeListener: () => undefined }),
-})
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: () => ({ matches: false, addListener: () => undefined, removeListener: () => undefined }),
+  })
+}
 
 class ResizeObserverStub {
   observe() {}

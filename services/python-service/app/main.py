@@ -11,6 +11,7 @@ from app.agent.tools import build_tool_registry
 from app.analysis.context_builder import CodeContextBuilder
 from app.fault.localizer import FaultLocalizer
 from app.repository.index import AnalysisIndex
+from app.browser_api import install_browser_api
 
 
 class RepositoryAnalysisRequest(BaseModel):
@@ -203,3 +204,19 @@ def agent_chat(request: AgentChatRequest) -> dict:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     except (RuntimeError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+# Keep the browser contract and native API on the same application and index.
+app = install_browser_api(app, [
+    ("POST", "/repositories/analyze", analyze_repository),
+    ("GET", "/symbols", list_symbols),
+    ("GET", "/symbols/{symbol_id:path}/callers", find_callers),
+    ("GET", "/symbols/{symbol_id:path}/callees", find_callees),
+    ("GET", "/symbols/{symbol_id:path}", get_symbol),
+    ("GET", "/call-graph", get_call_graph),
+    ("GET", "/files/read", read_file),
+    ("POST", "/context", build_context),
+    ("GET", "/demo/order-demo", get_order_demo),
+    ("POST", "/fault-localization", fault_localization),
+    ("POST", "/agent/chat", agent_chat),
+])

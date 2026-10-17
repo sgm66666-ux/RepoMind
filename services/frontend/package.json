@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "preview": "vite preview",
     "build": "vue-tsc --noEmit && vite build",
     "screenshots": "node scripts/capture-screenshots.mjs",
     "screenshots:planner": "node scripts/capture-planner-demo.mjs",
     "screenshots:release": "node scripts/capture-release-demos.mjs",
     "test": "vitest run",
+    "test:integration": "node scripts/verify-direct-api.mjs",
     "test:watch": "vitest"
   },
   "dependencies": {

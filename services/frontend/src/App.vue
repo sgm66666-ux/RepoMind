@@ -16,7 +16,7 @@ const navigation = [
   { to: '/fault-localization', label: '故障定位', icon: '!' },
   { to: '/agent', label: '代码智能助手', icon: '›_' },
 ]
-const gatewayLabel = computed(() => services.gateway === 'online' ? '正常' : services.gateway === 'offline' ? '离线' : '检测中')
+const apiLabel = computed(() => services.api === 'online' ? '正常' : services.api === 'offline' ? '离线' : '检测中')
 const llmLabel = computed(() => services.llm === 'success' ? '本次调用成功' : services.llm === 'unconfigured' ? '未配置' : services.llm === 'failed' ? '调用失败' : '未验证')
 
 onMounted(() => { void services.refresh() })
@@ -39,7 +39,7 @@ onMounted(() => { void services.refresh() })
       <header class="topbar">
         <div class="topbar-title"><span class="eyebrow">RepoMind / 工作空间</span><h1>{{ title }}</h1></div>
         <div class="topbar-right">
-          <div class="topbar-status"><span class="status-dot" :class="{ active: services.gateway === 'online', error: services.gateway === 'offline' }" />网关 {{ gatewayLabel }}</div>
+          <div class="topbar-status"><span class="status-dot" :class="{ active: services.api === 'online', error: services.api === 'offline' }" />API {{ apiLabel }}</div>
           <div class="topbar-status"><span class="status-dot" :class="{ active: services.llm === 'success', error: services.llm === 'failed' }" />LLM {{ llmLabel }}</div>
           <div class="repository-chip" :title="repository.analysis?.repositoryPath"><span class="status-dot" :class="{ active: repository.analysis }" /><span>{{ repository.analysis?.repositoryPath || '未分析仓库' }}</span></div>
         </div>

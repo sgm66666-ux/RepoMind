@@ -12,7 +12,7 @@ export class ApiError extends Error {
 }
 
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   timeout: 30_000,
   headers: { 'Content-Type': 'application/json' },
 })
@@ -21,7 +21,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ detail?: string; message?: string; error?: string }>) => {
     if (!error.response) {
-      return Promise.reject(new ApiError('Java Gateway is unavailable.', null, 'GATEWAY_UNAVAILABLE'))
+      return Promise.reject(new ApiError('FastAPI service is unavailable.', null, 'API_UNAVAILABLE'))
     }
     const body = error.response.data
     const message = body?.detail || body?.message || `Request failed with status ${error.response.status}`

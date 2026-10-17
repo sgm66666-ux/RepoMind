@@ -6,7 +6,7 @@
 
 RepoMind 是面向 Java/Python 代码仓库的代码分析与故障定位平台，通过 AST、Symbol、Call Graph 和源码上下文建立结构化代码索引，并结合本地 LLM 与 Tool Calling 辅助多步代码检索与问题定位。
 
-平台以静态分析和源码证据为基础：Python/FastAPI 提供代码分析与检索服务，Java/Spring Boot 提供前端 API 网关，Vue 控制台展示代码关系与诊断过程。模型辅助选择工具和组织诊断，最终展示区分可核验的源码事实与模型推断。
+平台以静态分析和源码证据为基础：Python/FastAPI 提供代码分析与检索服务，Vue 控制台通过同源 API 展示代码关系与诊断过程。模型辅助选择工具和组织诊断，最终展示区分可核验的源码事实与模型推断。
 
 ## 系统架构
 
@@ -19,8 +19,7 @@ flowchart TD
     S --> T["代码检索工具"]
     G --> T
     C --> K["结构化代码上下文"]
-    U["Vue 分析控制台"] --> J["Spring Boot API 网关"]
-    J --> F["FastAPI 代码分析服务"]
+    U["Vue 分析控制台"] -->|"/api · Vite 代理"| F["FastAPI 代码分析服务"]
     F --> S
     F --> L["Agent Loop / 本地 LLM"]
     L --> T
@@ -76,7 +75,6 @@ TaskPlanner 为问题制定分析计划，Agent Loop 通过 Tool Registry / Tool
 
 | 类别 | 技术 |
 | --- | --- |
-| API 网关 | Java、Spring Boot |
 | 代码分析服务 | Python、FastAPI、tree-sitter |
 | 结构与关系 | AST、Symbol Index、Call Graph、CodeContextBuilder |
 | 辅助诊断 | Tool Calling、Agent Loop、Ollama |
@@ -85,7 +83,7 @@ TaskPlanner 为问题制定分析计划，Agent Loop 通过 Tool Registry / Tool
 
 ## 本地运行
 
-以下命令适用于 Windows PowerShell。准备 Python、Java、Maven、Node.js/npm 和已启动的 Ollama；本地模型为 `qwen2.5-coder:14b`。在仓库根目录执行：
+以下命令适用于 Windows PowerShell。准备 Python、Node.js/npm 和已启动的 Ollama；本地模型为 `qwen2.5-coder:14b`。运行平台不再需要 Java 网关；只有执行 Java Demo 的 Maven 测试时才需要 Java 和 Maven。在仓库根目录执行：
 
 ```powershell
 ollama pull qwen2.5-coder:14b
@@ -98,7 +96,11 @@ Pop-Location
 .\scripts\check-readiness.ps1 -Demo inventory -RequireAnalysis -Strict
 ```
 
-访问 [http://127.0.0.1:5173](http://127.0.0.1:5173)。启动脚本检查 Ollama，并启动或核验 FastAPI、Spring Boot 和前端；随后分析选定的 Demo 仓库。切换演示时运行 `.\scripts\prepare-demo.ps1 -Demo register` 或 `.\scripts\prepare-demo.ps1 -Demo price`；每次切换都会替换当前内存索引。
+访问 [http://127.0.0.1:5173](http://127.0.0.1:5173)。启动脚本检查 Ollama，并启动或核验 FastAPI 和前端；随后分析选定的 Demo 仓库。切换演示时运行 `.\scripts\prepare-demo.ps1 -Demo register` 或 `.\scripts\prepare-demo.ps1 -Demo price`；每次切换都会替换当前内存索引。
+
+开发和预览模式的 `/api` 请求由 Vite 代理到 `REPOMIND_PYTHON_SERVICE_URL`（默认 `http://127.0.0.1:8000`）。FastAPI 同时保留原生路径与浏览器兼容路径，例如 `/analysis/repository` 和 `/api/repositories/analyze`；成功结果及浏览器错误结构保持一致，健康响应的服务身份改为 `python-service`。
+
+`npm run build` 的静态产物不自带代理。部署时需同源转发 `/api`，或在构建前设置 `VITE_API_BASE_URL` 指向 FastAPI，并通过后端 `REPOMIND_FRONTEND_ORIGINS` 显式配置前端源。默认启动仅监听本机，CORS 只允许本地 5173 源；当前没有登录或权限系统，分析路径由可信本机用户提供。详见[接口兼容、验证入口与安全边界](docs/architecture/local-api.md)。
 
 分析独立的企业订单 Showcase 时，在仓库根目录运行 `.\scripts\prepare-showcase.ps1`；它同样会替换当前内存索引，不影响冻结的 Demo 文件。
 
@@ -106,7 +108,7 @@ Pop-Location
 
 ### 企业订单 Showcase
 
-独立的 [Java 订单处理仓库](demo/enterprise-order-showcase/)串联客户、定价、库存、支付、配送、通知与审计，用于观察 RepoMind 在较大仓库中的真实表现。[演示记录与限制](docs/showcase/enterprise-order-showcase.md)列出实际分析结果。概览中的服务状态仅是拍摄时的探测结果。
+独立的 [Java 订单处理仓库](demo/enterprise-order-showcase/)串联客户、定价、库存、支付、配送、通知与审计，用于观察 RepoMind 在较大仓库中的真实表现。[演示记录与限制](docs/showcase/enterprise-order-showcase.md)列出实际分析结果。现有截图来自移除网关前的验证版本，服务状态只代表拍摄时的结果；当前运行界面以 FastAPI 服务为准。
 
 <a href="docs/screenshots/showcase-overview.png"><img src="docs/screenshots/showcase-overview.png" alt="企业订单 Showcase 概览：真实索引统计与服务状态" width="1100"></a>
 
@@ -150,7 +152,6 @@ CallPathFinder 沿已解析的静态调用边查询 `UserService.register` 到 `
 ```text
 services/
   python-service/   代码分析、Agent 与 FastAPI
-  java-service/     Spring Boot 网关
   frontend/         Vue 3 分析控制台
 scripts/            本地启动与演示准备
 demo/               示例仓库

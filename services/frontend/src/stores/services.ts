@@ -6,15 +6,15 @@ export type LlmStatus = 'unverified' | 'success' | 'unconfigured' | 'failed'
 
 export const useServicesStore = defineStore('services', {
   state: () => ({
-    gateway: 'checking' as ServiceStatus,
+    api: 'checking' as ServiceStatus,
     analysis: 'checking' as ServiceStatus,
     llm: 'unverified' as LlmStatus,
     provider: null as string | null,
   }),
   actions: {
     async refresh() {
-      const [gateway, analysis] = await Promise.allSettled([healthApi.gateway(), healthApi.analysisService()])
-      this.gateway = gateway.status === 'fulfilled' && gateway.value ? 'online' : 'offline'
+      const [api, analysis] = await Promise.allSettled([healthApi.api(), healthApi.analysisService()])
+      this.api = api.status === 'fulfilled' && api.value ? 'online' : 'offline'
       this.analysis = analysis.status === 'fulfilled' && analysis.value ? 'online' : 'offline'
     },
     recordAgentSuccess(provider: string) {

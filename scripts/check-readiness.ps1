@@ -1,7 +1,6 @@
 param(
     [string]$OllamaUrl = 'http://127.0.0.1:11434',
     [string]$PythonUrl = 'http://127.0.0.1:8000',
-    [string]$JavaUrl = 'http://127.0.0.1:8080',
     [string]$FrontendUrl = 'http://127.0.0.1:5173',
     [string]$Model = 'qwen2.5-coder:14b',
     [ValidateSet('inventory', 'register', 'price')][string]$Demo = 'inventory',
@@ -25,10 +24,10 @@ function Probe([string]$url) {
 
 $ollama = Probe "$($OllamaUrl.TrimEnd('/'))/api/tags"
 $python = Probe "$($PythonUrl.TrimEnd('/'))/health"
-$java = Probe "$($JavaUrl.TrimEnd('/'))/api/health"
 $frontend = $false
 try { $frontend = (Invoke-WebRequest -Uri $FrontendUrl -UseBasicParsing -TimeoutSec 3).StatusCode -eq 200 }
 catch { $frontend = $false }
+$browserApi = if ($frontend) { Probe "$($FrontendUrl.TrimEnd('/'))/api/health" } else { $null }
 $analysis = if ($python) { Probe "$($PythonUrl.TrimEnd('/'))/analysis/status" } else { $null }
 $modelAvailable = [bool]($ollama -and @($ollama.models | Where-Object name -eq $Model).Count -gt 0)
 $indexReady = [bool]($analysis -and $analysis.analysisReady -eq $true -and $analysis.repositoryPath -and
@@ -37,7 +36,7 @@ $result = [pscustomobject]@{
     ollamaReachable = [bool]$ollama
     requiredModelAvailable = $modelAvailable
     pythonApiReachable = [bool]($python -and $python.status -eq 'ok')
-    javaApiReachable = [bool]($java -and $java.status -eq 'ok')
+    frontendApiReachable = [bool]($browserApi -and $browserApi.status -eq 'ok' -and $browserApi.service -eq 'python-service')
     frontendReachable = $frontend
     demoIndexReady = $indexReady
     analyzedRepository = if ($analysis) { $analysis.repositoryPath } else { $null }
@@ -45,7 +44,7 @@ $result = [pscustomobject]@{
 }
 Write-Output $result
 if ($Strict -and (-not $result.ollamaReachable -or -not $result.requiredModelAvailable -or
-                -not $result.pythonApiReachable -or -not $result.javaApiReachable -or
+                -not $result.pythonApiReachable -or -not $result.frontendApiReachable -or
                 -not $result.frontendReachable -or ($RequireAnalysis -and -not $result.demoIndexReady))) {
     throw 'RepoMind is not ready; inspect the readiness fields above.'
 }
